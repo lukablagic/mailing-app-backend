@@ -45,7 +45,7 @@ class Mail
 
         imap_close($imap);
         echo json_encode($emails);
-      
+        header("HTTP/1.1 200 OK");
     }
 
     public function saveEmails($email)

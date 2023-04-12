@@ -15,9 +15,10 @@ class Database
         $this->username = $config['DB_USER'];
         $this->password = $config['DB_PASSWORD'];
     }
-
+ 
     public function connect()
     {
+  
         $this->conn = null;
         try {
             $this->conn = new PDO("mysql:host=" . $this->host . ";dbname=" . $this->db_name, $this->username);

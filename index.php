@@ -15,9 +15,10 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Content-Type: application/json charset=utf-8');
 
+
 set_exception_handler("ErrorHandler::handleException");
 set_error_handler("ErrorHandler::handleError");
-
+header("Access-Control-Allow-Origin: *");
 // Create a new instance of the User class
 $userController = new UserController();
 $mailController = new MailController();
@@ -29,6 +30,12 @@ $parts = explode("/", $requestPath);
 //var_dump($requestMethod);
 //var_dump($requestPath);
 // Check if the request method is GET and the endpoint is /register
+if ($requestMethod === 'OPTIONS') {
+    header('Access-Control-Allow-Origin: *');
+    header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+    header('Access-Control-Allow-Headers: Content-Type');
+    exit;
+}
 if ($requestMethod === 'POST' && $parts[1] === 'register') {
 
     // Get the request body
@@ -55,7 +62,12 @@ if ($requestMethod === 'POST' && $parts[1] === 'register') {
     // Invalid API endpoint
     http_response_code(404);
 }
-if ($requestMethod == "GET" && $parts[1] == "emails") {
+
+if ($requestMethod == "POST" && $parts[1] == "emails") {
+    header('Access-Control-Allow-Origin: *');
+    header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+    header('Access-Control-Allow-Headers: Content-Type');
+    header('Content-Type: application/json charset=utf-8');
     $data = json_decode(file_get_contents('php://input'), true);
     $mailController->fetchEmailsFromServer($data['email'], $data['password']);
 
