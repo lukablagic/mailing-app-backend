@@ -7,13 +7,13 @@ class Database
     public $conn;
     private $password = "";
 
-    public function __construct()
+    public function __construct(string $host, string $db_name,string $username, string $password)
     {
         $config = parse_ini_file('.env');
-        $this->host = $config['DB_HOST'];
-        $this->db_name = $config['DB_NAME'];
-        $this->username = $config['DB_USER'];
-        $this->password = $config['DB_PASSWORD'];
+        $this->host = $config[$host];
+        $this->db_name = $config[$db_name];
+        $this->username = $config[$username];
+        $this->password = $config[$password];
     }
  
     public function connect()
