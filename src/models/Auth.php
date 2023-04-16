@@ -33,8 +33,8 @@ class Auth
     }
     public function register($name, $surname, $email, $password)
     {
-        $hash = password_hash($password, PASSWORD_DEFAULT);
-        $stmt = $this->conn->prepare("INSERT INTO users (name, surname, email, `password`,token) VALUES ('$name','$surname','$email','$hash',NULL)");
+
+        $stmt = $this->conn->prepare("INSERT INTO users (name, surname, email, `password`,token) VALUES ('$name','$surname','$email','$password',NULL)");
 
         $stmt->execute();
 
@@ -82,15 +82,6 @@ class Auth
         return false;
     }
 
-    public function getUser()
-    {
-        return $this->user;
-    }
-
-    public function getToken()
-    {
-        return $this->token;
-    }
 
 }
 ?>

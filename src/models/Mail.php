@@ -72,35 +72,7 @@ class Mail
         $emails = $stmt->fetchAll(PDO::FETCH_ASSOC);
         return $emails;
     }
-    public function saveEmails($email)
-    {
-        $this->conn = $this->db->connect();
-    
-        // Check if the email already exists in the target table
-        $stmt = $this->conn->prepare('SELECT * FROM emails WHERE uid = :uid');
-        $stmt->bindParam(':uid', $email->uid);
-        $stmt->execute();
-        $existing_email = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-        if ($existing_email) {
-            // Update existing email
-            $query = "UPDATE emails SET subject = :subject, `from` = :from, `to` = :to, sent_date = :sent_date, body = :body WHERE uid = :uid";
-            $stmt = $this->conn->prepare($query);
-        } else {
-            // Insert new email
-            $query = "INSERT INTO emails (uid, subject, `from`, `to`, sent_date, body) VALUES (:uid, :subject, :from, :to, :sent_date, :body)";
-            $stmt = $this->conn->prepare($query);
-        }
-    
-        // Bind parameters and execute the query
-        $stmt->bindParam(':uid', $email->uid);
-        $stmt->bindParam(':subject', $email->subject);
-        $stmt->bindParam(':from', $email->from);
-        $stmt->bindParam(':to', $email->to);
-        $stmt->bindParam(':sent_date', $email->sent_date);
-        $stmt->bindParam(':body', $email->body);
-        $stmt->execute();
-    }
+   
     
  
 

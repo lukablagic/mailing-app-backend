@@ -17,10 +17,12 @@ header('Access-Control-Allow-Origin: *');
 class MailController
 {
     public $gateway;
+    private $userGateway;
 
-    function __construct(Mail $gateway)
+    function __construct(Mail $gateway,User $userGateway)
     {
         $this->gateway = $gateway;
+        $this->userGateway = $userGateway;
     }
 
   public function processRequest(string $method, ?string $id): void
@@ -84,23 +86,36 @@ class MailController
                 header("Allow: GET, PATCH, DELETE");
         }
     }
-    
-    private function processCollectionRequest(string $method): void
+    private function authenticate()
     {
+    
         // Check if the user is authenticated
         $database = new Database("DB_HOST", "DB_NAME", "DB_USER", "DB_PASSWORD");
         $auth = new Auth($database);
         $token = $_SERVER['HTTP_AUTHORIZATION'] ?? null;
+        if ($token !== null && str_starts_with($token, 'Bearer ')) {
+            $token = substr($token, 7);
+            
+        } else {
+            $token = null;
+        }
+        // echo json_encode($token);
         if (!$auth->authorize($token)) {
             http_response_code(401);
             echo json_encode(["error" => "Unauthorized"]);
-            return;
+            return null;
         }
-    
+     
+       return  $this->userGateway->getByToken($token);
+    }
+    private function processCollectionRequest(string $method): void
+    {
+
+       $user = $this->authenticate();
         switch ($method) {
             case "GET":
                 // Get the user's ID from the authentication token
-                $user = $auth->getUser();
+                
                 $userId = $user["id"];
     
                 // Get the collection for the user
@@ -118,8 +133,6 @@ class MailController
                     break;
                 }
     
-                // Get the user's ID from the authentication token
-                $user = $auth->getUser();
                 $userId = $user["id"];
     
                 $data["user_id"] = $userId;

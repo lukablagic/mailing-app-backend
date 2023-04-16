@@ -37,7 +37,7 @@ $authGateway = new Auth($database);
 
 switch ($endpoint) {
     case 'emails':
-        $mailController = new MailController($mailGateway);
+        $mailController = new MailController($mailGateway, $userGateway);
         $mailController->processRequest($_SERVER["REQUEST_METHOD"], $id);
          break;
     case 'auth':

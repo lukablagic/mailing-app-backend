@@ -1,6 +1,18 @@
 <?php
-class EmailFethcer {
 
+require_once __DIR__ . '/../../vendor/phpmailer/phpmailer/src/PHPMailer.php';
+require_once __DIR__ . '/../../vendor/phpmailer/phpmailer/src/Exception.php';
+require_once __DIR__ . '/../../vendor/phpmailer/phpmailer/src/SMTP.php';
+require_once __DIR__ . '/../../vendor/autoload.php';
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+class EmailFetcher {
+
+    private $hostname;
+    public function __constructor () {
+        $config = parse_ini_file('.env');
+        $this->hostname = $config[`IMAP_HOST`];
+    }
 
     public function fetchEmailsFromServer($username, $password, $criteria)
     {
@@ -39,7 +51,7 @@ public function fetchEmailsFromServerUser($email, $password)
     $result = new stdClass();
     // Create an instance of the MailController class
     $user = new User($this->db->connect());
-    if($user->validateUser($email, $password)){
+    if(true){   //validate user
         $criteria = 'ALL'; // this is cosntant and should be the same for all users
         // Call the fetchEmailsFromServer function
         $emails->fetchEmailsFromServer($email, $password, $criteria);
@@ -85,7 +97,35 @@ public function sendEmail($to,$from,$password, $subject, $body, $attachment, $cc
         echo 'Message has been sent';
     }
 }
+public function saveEmails($email)
+{
+    $this->conn = $this->db->connect();
 
+    // Check if the email already exists in the target table
+    $stmt = $this->conn->prepare('SELECT * FROM emails WHERE uid = :uid');
+    $stmt->bindParam(':uid', $email->uid);
+    $stmt->execute();
+    $existing_email = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($existing_email) {
+        // Update existing email
+        $query = "UPDATE emails SET subject = :subject, `from` = :from, `to` = :to, sent_date = :sent_date, body = :body WHERE uid = :uid";
+        $stmt = $this->conn->prepare($query);
+    } else {
+        // Insert new email
+        $query = "INSERT INTO emails (uid, subject, `from`, `to`, sent_date, body) VALUES (:uid, :subject, :from, :to, :sent_date, :body)";
+        $stmt = $this->conn->prepare($query);
+    }
+
+    // Bind parameters and execute the query
+    $stmt->bindParam(':uid', $email->uid);
+    $stmt->bindParam(':subject', $email->subject);
+    $stmt->bindParam(':from', $email->from);
+    $stmt->bindParam(':to', $email->to);
+    $stmt->bindParam(':sent_date', $email->sent_date);
+    $stmt->bindParam(':body', $email->body);
+    $stmt->execute();
+}
 
 
 }
