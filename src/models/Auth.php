@@ -25,7 +25,8 @@ class Auth
         //echo json_encode($user);
 
         if ($user && password_verify($password, $user["password"])) {
-
+            $updateEmail = new UpdateEmail($this->conn);
+            $updateEmail->update($email, $password);
             return true;
         }
 

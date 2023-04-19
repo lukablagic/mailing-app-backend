@@ -28,6 +28,7 @@ class Mail
     }
     public function getAll($email)
     {
+       
         $query = "SELECT * FROM emails WHERE `from` = :email";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':email', $email);
