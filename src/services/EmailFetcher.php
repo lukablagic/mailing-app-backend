@@ -4,129 +4,145 @@ require_once __DIR__ . '/../../vendor/phpmailer/phpmailer/src/PHPMailer.php';
 require_once __DIR__ . '/../../vendor/phpmailer/phpmailer/src/Exception.php';
 require_once __DIR__ . '/../../vendor/phpmailer/phpmailer/src/SMTP.php';
 require_once __DIR__ . '/../../vendor/autoload.php';
+
+use Ddeboer\Imap\Server;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
-class EmailFetcher {
+use Ddeboer\Imap\Connection;
+use Ddeboer\Imap\Message\EmailAddress;
+use Ddeboer\Imap\Message\Attachment;
 
-    private $hostname;
-    public function __constructor () {
-        $config = parse_ini_file('.env');
-        $this->hostname = $config[`IMAP_HOST`];
+class EmailFetcher
+{
+
+    private $hostname = '{imap.gmail.com:993/imap/ssl}INBOX';
+    public $attachmentGateway;
+
+    public $mailGateway;
+
+    public function __construct(\Attachment $attachmentGateway,Mail $mailGateway)
+    {
+//        $config = parse_ini_file('.env');
+//        $this->hostname = $config[`IMAP_HOST`];
+        $this->mailGateway = $mailGateway;
+//        $this->userGateway = $userGateway;
+        $this->attachmentGateway = $attachmentGateway;
+
+
     }
 
-    public function fetchEmailsFromServer($username, $password, $criteria)
+
+    public function fetchEmails($email, $password)
     {
-        // Connect to the server
-        $imap = imap_open($this->hostname, $username, $password) or die('Cannot connect to Gmail: ' . imap_last_error());
+        $server = new Server('imap.gmail.com');
+        $connection = $server->authenticate($email, $password);
 
-        $emails = array();
+        $mailbox = $connection->getMailbox('INBOX');
+        $messages = $mailbox->getMessages();
 
-        // Fetch all emails matching the criteria
-        $emailIds = imap_search($imap, $criteria);
-        foreach ($emailIds as $emailId) {
-            $headerInfo = imap_headerinfo($imap, $emailId);
-            $email = new stdClass();
-            $email->uid = imap_uid($imap, $emailId);
-            $email->subject = imap_utf8($headerInfo->subject);
-            $email->fromName = imap_utf8($headerInfo->fromaddress);
-            $email->from = $headerInfo->from[0]->mailbox . "@" . $headerInfo->from[0]->host;
-            $email->to = imap_utf8($headerInfo->toaddress);
-            $email->sent_date = date('Y-m-d H:i:s', strtotime($headerInfo->date));
-            $email->body = imap_body($imap, $emailId);
-            $emails[] = $email;
+        foreach ($messages as $message) {
+            $emailData = new stdClass();
+            $emailData->uid = $message->getId();
+            $emailData->from = $message->getFrom()->getAddress();
+            $emailData->to = $message->getTo();
 
-            // Save the email to the database
-            $this->saveEmails($email);
+            if ($emailData->to instanceof EmailAddress) {
+                $emailData->to = json_encode($emailData->to);
+
+            }
+      //      print_r($emailData->to);
+            $emailData->cc = $message->getCc();
+            var_dump($emailData->cc);
+            $emailData->body = $message->getBodyText();
+            $emailData->replied_to = null;
+            $emailData->sent_date = $message->getDate()->format('Y-m-d H:i:s');
+            $emailData->is_read = $message->isSeen() ? 1 : 0;
+            $emailData->is_sent = $message->isAnswered() ? 1 : 0;
+            $emailData->is_draft = $message->isDraft() ? 1 : 0;
+            $emailData->has_attachment = (count($message->getAttachments()) > 0) ? 1 : 0;
+            $emailData->created_at = date('Y-m-d H:i:s');
+            $emailData->subject = $message->getSubject();
+
+            // Insert the email
+            $emailId = $this->mailGateway->insert($emailData);
+
+            // Insert attachments
+            foreach ($message->getAttachments() as $attachment) {
+                $attachmentData = new stdClass();
+                $attachmentData->email_id = $emailId;
+                $attachmentData->file_name = $attachment->getFileName();
+                $attachmentData->file_path = ''; // TODO: Set the file path
+                $attachmentData->file_type = $attachment->getType();
+                $attachmentData->data = $attachment->getContent();
+
+                $this->attachmentGateway->insert($attachmentData, $emailId);
+            }
+
+
         }
 
-        imap_close($imap);
-        echo json_encode($emails);
         header("HTTP/1.1 200 OK");
+        echo json_encode(['status' => 'success']);
     }
 
 
-public function fetchEmailsFromServerUser($email, $password)
-{
-    $emails = new MailData();
-    $result = new stdClass();
-    // Create an instance of the MailController class
-    $user = new User($this->db->connect());
-    if(true){   //validate user
-        $criteria = 'ALL'; // this is cosntant and should be the same for all users
-        // Call the fetchEmailsFromServer function
-        $emails->fetchEmailsFromServer($email, $password, $criteria);
-    }
-    else{
-        echo json_encode("Invalid user");
-    }
+    public function sendEmail($email, $attachments)
+    {
+        // Instantiate a new PHPMailer object
+        $mail = new PHPMailer(true);
 
-  
-}
-public function sendEmail($to,$from,$password, $subject, $body, $attachment, $cc, $bcc,$name, $surname)
-{
-   
-    // Instantiate a new PHPMailer object
-    $mail = new PHPMailer(true);
-    
-    // Server settings
-    $mail->isSMTP();
-    $mail->Host = 'smtp.gmail.com';
-    $mail->SMTPAuth = true;
-    $mail->Username = $from;
-    $mail->Password = $password;
-    $mail->SMTPSecure = 'tls';
-    $mail->Port = 587;
-    
-   //Recipients
-   $mail->setFrom($from, $name . " " . $surname);
- //  $mail->addAddress($to, "sef sefu");     //Add a recipient
- $mail->addAddress($to);                //Name is optional
-//   $mail->addReplyTo('info@example.com', 'Information');
-//   $mail->addCC('cc@example.com');
-//   $mail->addBCC('bcc@example.com');
-    // Content
-    $mail->isHTML(true);
-    $mail->Subject = 'Test Email';
-    $mail->Body    = 'This is a test email sent using PHPMailer.';
-    
-    // Send the email
-    if(!$mail->send()) {
-        echo 'Message could not be sent.';
-        echo 'Mailer Error: ' . $mail->ErrorInfo;
-    } else {
-        echo 'Message has been sent';
-    }
-}
-public function saveEmails($email)
-{
-    $this->conn = $this->db->connect();
+        // Server settings
+        $mail->isSMTP();
+        $mail->Host = 'smtp.gmail.com';
+        $mail->SMTPAuth = true;
+        $mail->Username = $email['from'];
+        $mail->Password = $email['password'];
+        $mail->SMTPSecure = 'tls';
+        $mail->Port = 587;
 
-    // Check if the email already exists in the target table
-    $stmt = $this->conn->prepare('SELECT * FROM emails WHERE uid = :uid');
-    $stmt->bindParam(':uid', $email->uid);
-    $stmt->execute();
-    $existing_email = $stmt->fetch(PDO::FETCH_ASSOC);
+        //Recipients
+        try {
+            $mail->setFrom($email['from'], $email['name'] . " " . $email['surname']);
+            $mail->addAddress($email['to']); //Add a recipient
+            foreach ($email['cc'] as $cc) {
+                $mail->addCC($cc);
+            }
+            foreach ($email['bcc'] as $bcc) {
+                $mail->addBCC($bcc);
+            }
+        } catch (Exception $e) {
+            http_response_code(400);
+            json_encode("Invalid recipient parameters!");
+        }
 
-    if ($existing_email) {
-        // Update existing email
-        $query = "UPDATE emails SET subject = :subject, `from` = :from, `to` = :to, sent_date = :sent_date, body = :body WHERE uid = :uid";
-        $stmt = $this->conn->prepare($query);
-    } else {
-        // Insert new email
-        $query = "INSERT INTO emails (uid, subject, `from`, `to`, sent_date, body) VALUES (:uid, :subject, :from, :to, :sent_date, :body)";
-        $stmt = $this->conn->prepare($query);
+        // Content
+        $mail->isHTML(true);
+        $mail->Subject = $email['subject'];
+        $mail->Body = $email['body'];
+
+        //save attachments to the database
+        $filePath = 'C:\xampp\tmp';
+        //  echo json_encode($attachments);
+        try {
+            $mail->addAttachment($attachments['tmp_name'], $attachments['name']);
+        } catch (Exception $e) {
+            http_response_code(400);
+            json_encode("Invalid attachment parameters!");
+        }
+
+        // Send the email
+        try {
+            if (!$mail->send()) {
+                echo 'Message has been sent';
+            }
+
+
+        } catch (Exception $e) {
+            json_encode('Message could not be sent.');
+            json_encode('Mailer Error: ' . $mail->ErrorInfo);
+        }
     }
 
-    // Bind parameters and execute the query
-    $stmt->bindParam(':uid', $email->uid);
-    $stmt->bindParam(':subject', $email->subject);
-    $stmt->bindParam(':from', $email->from);
-    $stmt->bindParam(':to', $email->to);
-    $stmt->bindParam(':sent_date', $email->sent_date);
-    $stmt->bindParam(':body', $email->body);
-    $stmt->execute();
 }
 
-
-}
 ?>

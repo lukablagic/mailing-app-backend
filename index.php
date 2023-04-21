@@ -1,17 +1,15 @@
 <?php
-
-// Load necessary files
-//require_once 'api/routes/api.php';
 declare(strict_types=1);
 
 spl_autoload_register(function ($class) {
     require __DIR__ . "/src/$class.php";
 });
 
+
 require_once __DIR__ . "/src/config/Database.php";
 require_once __DIR__ . "/src/controllers/MailController.php";
 require_once __DIR__ . "/src/controllers/AuthController.php";
-
+require_once __DIR__ . "/src/services/EmailFetcher.php";
 
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
@@ -31,13 +29,15 @@ $id = $parts[2] ?? null;
 
 
 $database = new Database("DB_HOST", "DB_NAME", "DB_USER", "DB_PASSWORD");
-$mailGateway = new Mail($database);
 $userGateway = new User($database);
-$authGateway = new Auth($database);
+$mailGateway = new Mail($database, $userGateway);
+$authGateway = new Auth($database, $userGateway);
+$attachmentGateway = new Attachment($database);
+$emailFetcherGateway = new EmailFetcher($attachmentGateway, $mailGateway);
 
 switch ($endpoint) {
     case 'emails':
-        $mailController = new MailController($mailGateway, $userGateway);
+        $mailController = new MailController($mailGateway, $userGateway, $emailFetcherGateway,$attachmentGateway);
         $mailController->processRequest($_SERVER["REQUEST_METHOD"], $id);
          break;
     case 'auth':
@@ -48,5 +48,3 @@ switch ($endpoint) {
         http_response_code(404);
         echo json_encode(["error" => "Invalid API endpoint"]);
 }
-
-?>

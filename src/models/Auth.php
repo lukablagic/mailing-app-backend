@@ -1,45 +1,45 @@
 <?php
+require_once __DIR__ . '/../../src/services/UpdateEmail.php';
+
 class Auth
 {
 
     private $conn;
     private $user;
     private $token;
+    private $userGateway;
 
-    public function __construct($database)
-    { {
+    public function __construct($database, User $userGateway)
+    {
+
             $this->conn = $database->connect();
             $this->user = null;
             $this->token = null;
-        }
+            $this->userGateway = $userGateway;
+
 
     }
 
     public function login($email, $password)
     {
-        $stmt = $this->conn->prepare("SELECT * FROM users WHERE email = :email");
-        $stmt->bindParam(':email', $email);
-        $stmt->execute();
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        //echo json_encode($user);
+        if ($this->userGateway->userExisits($email, $password)) {
 
-        if ($user && password_verify($password, $user["password"])) {
-            $updateEmail = new UpdateEmail($this->conn);
-            $updateEmail->update($email, $password);
             return true;
         }
 
         return false;
     }
+
     public function register($name, $surname, $email, $password)
     {
+        $userExists = $this->userGateway->userExisits($email, $password);
+        if ($userExists) {
+            http_response_code(400);
+            return false;
+        }
 
-        $stmt = $this->conn->prepare("INSERT INTO users (name, surname, email, `password`,token) VALUES ('$name','$surname','$email','$password',NULL)");
 
-        $stmt->execute();
-
-        if ($stmt->rowCount() > 0) {
+        if ($this->userGateway->insert($name, $surname, $email, $password, null)) {
             return true;
         }
 
@@ -48,26 +48,22 @@ class Auth
 
     public function generateToken($email)
     {
-            $token = bin2hex(random_bytes(32));
-            $stmt = $this->conn->prepare("UPDATE users SET token = ? WHERE email =  ?");
-            $stmt->execute([$token, $email]);
-            return $token;
+        $token = bin2hex(random_bytes(32));
+        $stmt = $this->conn->prepare("UPDATE users SET token = ? WHERE email =  ?");
+        $stmt->execute([$token, $email]);
+        return $token;
     }
 
-    public function logout( $email, $password)
-    {   
-        $stmt = $this->conn->prepare("UPDATE users SET token = NULL WHERE email = :email");
-        $stmt->bindParam(':email', $email);
-        $user = $stmt->execute();
-         echo json_encode($user);  
-        
+    public function logout($email, $password)
+    {
+        $user = $this->userGateway->updateUserToken(null, $email,$password);
         if ($user) {
-           //
             return true;
         }
+
         return false;
     }
-    
+
 
     public function authorize($token)
     {
@@ -85,4 +81,5 @@ class Auth
 
 
 }
+
 ?>

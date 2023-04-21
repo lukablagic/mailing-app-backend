@@ -6,170 +6,145 @@
 require_once __DIR__ . "/../models/Mail.php";
 require_once __DIR__ . "/../models/User.php";
 require_once __DIR__ . "/../models/Auth.php";
+require_once __DIR__ . "/../models/Attachment.php";
 require_once __DIR__ . '/../../vendor/phpmailer/phpmailer/src/PHPMailer.php';
 require_once __DIR__ . '/../../vendor/phpmailer/phpmailer/src/Exception.php';
 require_once __DIR__ . '/../../vendor/phpmailer/phpmailer/src/SMTP.php';
 require_once __DIR__ . '/../../vendor/autoload.php';
+
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
+
 header('Access-Control-Allow-Origin: *');
+//1.	GET /emails - Retrieves a list of all received emails from the MySQL database
+//2.	GET /emails/{id} - Retrieves the details of a specific email by its ID
+
+//4.	PUT /emails/{id}/status - Updates the status of an email (read/unread) on the mail server
+//5.	POST /emails/{id}/reply - Sends a reply email to the sender of the specified email
+//6.	POST /emails/{id}/forward - Sends a forwarded email to one or more recipients
+//7.	GET /emails/{id}/conversation - Retrieves the conversation history for the specified email
+//8.	GET /emails/{id}/attachments - Retrieves the attachments (if any) for the specified email
+
 
 class MailController
 {
-    public $gateway;
+    public $mailGateway;
     private $userGateway;
+    private $emailFetcherGateway;
+    private $attachmentGateway;
 
-    function __construct(Mail $gateway,User $userGateway)
-    {
-        $this->gateway = $gateway;
+    public function __construct( Mail $mailGateway, User $userGateway, EmailFetcher $emailFetcherGateway,Attachment $attachmentGateway) {
+        $this->mailGateway = $mailGateway;
         $this->userGateway = $userGateway;
+        $this->emailFetcherGateway = $emailFetcherGateway;
+        $this->attachmentGateway = $attachmentGateway;
     }
 
-  public function processRequest(string $method, ?string $id): void
+    public function processRequest(string $method, ?string $id): void
     {
         if ($id) {
-            
+
             $this->processResourceRequest($method, $id);
-            
+
         } else {
-            
+
             $this->processCollectionRequest($method);
-            
+
         }
     }
-    
-    private function processResourceRequest(string $method, string $id): void
-    {
-        $product = $this->gateway->get($id);
-        $rows = [];
-        if ( ! $product) {
-            http_response_code(404);
-            echo json_encode(["message" => "Product not found"]);
-            return;
-        }
-        
-        switch ($method) {
-            case "GET":
-                echo json_encode($product);
-                break;
-                
-            case "PATCH":
-                $data = (array) json_decode(file_get_contents("php://input"), true);
-                
-                $errors = $this->getValidationErrors($data, false);
-                
-                if ( ! empty($errors)) {
-                    http_response_code(422);
-                    echo json_encode(["errors" => $errors]);
-                    break;
-                }
-                
-                $rows = $this->gateway->update($product, $data);
-                
-                echo json_encode([
-                    "message" => "Product $id updated",
-                    "rows" => $rows
-                ]);
-                break;
-                
-            case "DELETE":
-                $rows = $this->gateway->delete($id);
-                
-                echo json_encode([
-                    "message" => "Product $id deleted",
-                    "rows" => $rows
-                ]);
-                break;
-                
-            default:
-                http_response_code(405);
-                header("Allow: GET, PATCH, DELETE");
-        }
-    }
-    private function authenticate()
-    {
-    
-        // Check if the user is authenticated
-        $database = new Database("DB_HOST", "DB_NAME", "DB_USER", "DB_PASSWORD");
-        $auth = new Auth($database);
-        $token = $_SERVER['HTTP_AUTHORIZATION'] ?? null;
-        if ($token !== null && str_starts_with($token, 'Bearer ')) {
-            $token = substr($token, 7);
-            
-        } else {
-            $token = null;
-        }
-        // echo json_encode($token);
-        if (!$auth->authorize($token)) {
-            http_response_code(401);
-            echo json_encode(["error" => "Unauthorized"]);
-            return null;
-        }
-     
-       return  $this->userGateway->getByToken($token);
-    }
+private function authenticateCall(){
+    $headers = apache_request_headers();
+    $token = $_SERVER['HTTP_AUTHORIZATION'] ?? null;
+
+   $token = str_replace('Bearer ', '', $token);
+  //  echo json_encode($token);
+    return $this->userGateway->getUserByToken($token);
+}
     private function processCollectionRequest(string $method): void
     {
+        $user  = $this->authenticateCall();
+        if(!$user){
+            http_response_code(401);
+            echo json_encode(["message" => "Unauthorized"]);
+            return;
+        }
 
-       $user = $this->authenticate();
         switch ($method) {
             case "GET":
-                // Get the user's ID from the authentication token
-                
-                $userId = $user["id"];
-    
-                // Get the collection for the user
-                echo json_encode($this->gateway->getAll($userId));
+                //fetch all emails from imap server
+               // $this->emailFetcherGateway->fetchEmails($user['email'],$user['password']);
+           //     $this->emailFetcherGateway->fetchEmails($user['email'],$user['password']);
+                //1.	GET /emails - Retrieves a list of all received emails from the MySQL database
+               echo json_encode($this->mailGateway->getAll($user['email']));
                 break;
-    
+            //3.	POST /emails - Sends an email using SMTP protocol to one or more recipients
             case "POST":
-                $data = (array) json_decode(file_get_contents("php://input"), true);
-    
-                $errors = $this->getValidationErrors($data);
-    
-                if (!empty($errors)) {
-                    http_response_code(422);
-                    echo json_encode(["errors" => $errors]);
-                    break;
-                }
-    
-                $userId = $user["id"];
-    
-                $data["user_id"] = $userId;
-    
-                $id = $this->gateway->insert($data);
-    
+                $jsonString = stripslashes($_POST['body']);
+                $data = json_decode($jsonString, true);
+                $attachment = $_FILES['fileName'];
+
+                $this->emailFetcherGateway->sendEmail($data,$attachment);
                 http_response_code(201);
                 echo json_encode([
-                    "message" => "Product created",
-                    "id" => $id
+                    "message" => "Message sent",
+             //       "id" => $id
                 ]);
                 break;
-    
+
             default:
                 http_response_code(405);
                 header("Allow: GET, POST");
         }
     }
-    
-    
-    private function getValidationErrors(array $data, bool $is_new = true): array
+    private function processResourceRequest(string $method, string $id): void
     {
-        $errors = [];
-        
-        if ($is_new && empty($data["name"])) {
-            $errors[] = "name is required";
+        $product = $this->mailGateway->get($id);
+        $rows = [];
+        if (!$product) {
+            http_response_code(404);
+            echo json_encode(["message" => "Mail not found"]);
+            return;
         }
-        
-        if (array_key_exists("size", $data)) {
-            if (filter_var($data["size"], FILTER_VALIDATE_INT) === false) {
-                $errors[] = "size must be an integer";
-            }
-        }
-        
-        return $errors;
-    }
 
+        switch ($method) {
+
+            case "GET":
+                echo json_encode($product);
+                break;
+
+            case "PATCH":
+                $data = (array)json_decode(file_get_contents("php://input"), true);
+
+             //   $errors = $this->getValidationErrors($data, false);
+
+                if (!empty($errors)) {
+                    http_response_code(422);
+                    echo json_encode(["errors" => $errors]);
+                    break;
+                }
+
+                $rows = $this->gateway->update($product, $data);
+
+                echo json_encode([
+                    "message" => "Product $id updated",
+                    "rows" => $rows
+                ]);
+                break;
+
+            case "DELETE":
+                $rows = $this->gateway->delete($id);
+
+                echo json_encode([
+                    "message" => "Product $id deleted",
+                    "rows" => $rows
+                ]);
+                break;
+
+            default:
+                http_response_code(405);
+                header("Allow: GET, PATCH, DELETE");
+        }
+    }
 
 
 

@@ -1,4 +1,5 @@
 <?php
+
 class Database
 {
     private $host;
@@ -7,18 +8,17 @@ class Database
     public $conn;
     private $password = "";
 
-    public function __construct(string $host, string $db_name,string $username, string $password)
+    public function __construct(string $host, string $db_name, string $username, string $password)
     {
-        $config = parse_ini_file('.env');
-        $this->host = $config[$host];
-        $this->db_name = $config[$db_name];
-        $this->username = $config[$username];
-        $this->password = $config[$password];
+        $this->host = '127.0.0.1:3310';
+        $this->db_name = 'mailingdb';
+        $this->password = "";
+        $this->username = 'root';
     }
- 
+
     public function connect()
     {
-  
+
         $this->conn = null;
         try {
             $this->conn = new PDO("mysql:host=" . $this->host . ";dbname=" . $this->db_name, $this->username);
@@ -30,4 +30,5 @@ class Database
     }
 
 }
+
 ?>

@@ -1,13 +1,17 @@
 <?php
 
-
+//9.	PUT /settings/display-images - Updates the user's preference for displaying images in emails
+//10.	POST /auth- Authenticates a user and generates a session token
+//11.	POST /auth - Destroys the user's session token
 
 class AuthController {
 
     private $auth;
+    private $userGateway;
 
     public function __construct( Auth $auth) {
         $this->auth = $auth;
+
     }
     public function processRequest(string $method) {
         switch ($method) {
@@ -54,8 +58,6 @@ class AuthController {
         $data = json_decode(file_get_contents("php://input"), true);
         $email = $data["email"];
         $password = $data["password"];
-        // echo json_encode($email);
-        // echo json_encode($password);
         if ($this->auth->login($email, $password)) {
             $token = $this->auth->generateToken($email);
             http_response_code(200);
@@ -89,7 +91,7 @@ class AuthController {
     }
     public function register() {
         $data = json_decode(file_get_contents("php://input"), true);
-        
+
         $name = $data["name"];
         $surname = $data["surname"];
         $email = $data["email"];
@@ -104,7 +106,7 @@ class AuthController {
         } else {
             http_response_code(400);
             echo json_encode([
-                "message" => "Registration failed"
+                "message" => "Registration failed or user already exists!"
             ]);
         }
     }

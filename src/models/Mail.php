@@ -2,20 +2,18 @@
 //db config 
 require_once __DIR__ . "/../config/Database.php";
 require_once __DIR__ . "/../controllers/MailController.php";
-class MailData{
 
-}
 class Mail
 {
-    private $db;
+
     private $conn;
-    private $table_name = "emails";
-    private $hostname ;
+    private $userGateway ;
 
 
-  public function __construct(Database $database)
+  public function __construct(Database $database, User $userGateway)
     {
         $this->conn = $database->connect();
+        $this->userGateway = $userGateway;
     }
     public function get (string $uid)
     {
@@ -29,23 +27,25 @@ class Mail
     public function getAll($email)
     {
        
-        $query = "SELECT * FROM emails WHERE `from` = :email";
+        $query = "SELECT * FROM emails WHERE `to` = :email";
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':email', $email);
+        $stmt->bindParam(':to', $email);
         $stmt->execute();
         $emails = $stmt->fetchAll(PDO::FETCH_ASSOC);
         return $emails;
     }
     public function insert($email){
-        $query = "INSERT INTO emails (uid, subject, `from`, `to`, sent_date, body) VALUES (:uid, :subject, :from, :to, :sent_date, :body)";
+        $query = "INSERT INTO emails (uid, subject, `from`, sent_date, body) VALUES (:uid, :subject, :from, :sent_date, :body)";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':uid', $email->uid);
         $stmt->bindParam(':subject', $email->subject);
         $stmt->bindParam(':from', $email->from);
-        $stmt->bindParam(':to', $email->to);
+     //   $stmt->bindParam(':to', $email->to);
         $stmt->bindParam(':sent_date', $email->sent_date);
         $stmt->bindParam(':body', $email->body);
         $stmt->execute();
+        $email->id = $this->conn->lastInsertId();
+
         return $email;
     }
     public function update( $email,$data){
