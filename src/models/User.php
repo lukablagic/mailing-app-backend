@@ -26,7 +26,15 @@ class User
         }
         return false;
     }
+    public function getUserByEmail($email)
+    {
+        $stmt = $this->conn->prepare("SELECT * FROM users WHERE email = :email");
+        $stmt->bindParam(':email', $email);
+        $stmt->execute();
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
+        return $user;
+    }
     public function getUserByToken($token)
     {
         $stmt = $this->conn->prepare("SELECT * FROM users WHERE token = :token");

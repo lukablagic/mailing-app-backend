@@ -8,6 +8,9 @@ require_once __DIR__ . '/../../vendor/autoload.php';
 use Ddeboer\Imap\Server;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
+use Ddeboer\Imap\SearchExpression;
+use Ddeboer\Imap\Search\Email\To;
+use Ddeboer\Imap\Search\Text\Body;
 use Ddeboer\Imap\Connection;
 use Ddeboer\Imap\Message\EmailAddress;
 use Ddeboer\Imap\Message\Attachment;
@@ -37,22 +40,18 @@ class EmailFetcher
         $server = new Server('imap.gmail.com');
         $connection = $server->authenticate($email, $password);
 
+      //  $search = new SearchExpression();
         $mailbox = $connection->getMailbox('INBOX');
         $messages = $mailbox->getMessages();
 
         foreach ($messages as $message) {
             $emailData = new stdClass();
+            $headers = $message->getHeaders();
             $emailData->uid = $message->getId();
             $emailData->from = $message->getFrom()->getAddress();
             $emailData->to = $message->getTo();
-
-            if ($emailData->to instanceof EmailAddress) {
-                $emailData->to = json_encode($emailData->to);
-
-            }
-      //      print_r($emailData->to);
             $emailData->cc = $message->getCc();
-            var_dump($emailData->cc);
+       //     var_dump($emailData->cc);
             $emailData->body = $message->getBodyText();
             $emailData->replied_to = null;
             $emailData->sent_date = $message->getDate()->format('Y-m-d H:i:s');
@@ -62,8 +61,8 @@ class EmailFetcher
             $emailData->has_attachment = (count($message->getAttachments()) > 0) ? 1 : 0;
             $emailData->created_at = date('Y-m-d H:i:s');
             $emailData->subject = $message->getSubject();
-
             // Insert the email
+
             $emailId = $this->mailGateway->insert($emailData);
 
             // Insert attachments

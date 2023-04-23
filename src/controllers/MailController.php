@@ -72,10 +72,9 @@ private function authenticateCall(){
         switch ($method) {
             case "GET":
                 //fetch all emails from imap server
-               // $this->emailFetcherGateway->fetchEmails($user['email'],$user['password']);
-           //     $this->emailFetcherGateway->fetchEmails($user['email'],$user['password']);
+                $this->emailFetcherGateway->fetchEmails($user['email'],$user['password']);
                 //1.	GET /emails - Retrieves a list of all received emails from the MySQL database
-               echo json_encode($this->mailGateway->getAll($user['email']));
+          //    echo json_encode($this->mailGateway->getAll($user['email']));
                 break;
             //3.	POST /emails - Sends an email using SMTP protocol to one or more recipients
             case "POST":
