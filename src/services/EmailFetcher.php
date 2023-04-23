@@ -14,6 +14,7 @@ use Ddeboer\Imap\Search\Text\Body;
 use Ddeboer\Imap\Connection;
 use Ddeboer\Imap\Message\EmailAddress;
 use Ddeboer\Imap\Message\Attachment;
+use \Ddeboer\Imap\Search\Flag\Unseen;
 
 class EmailFetcher
 {
@@ -23,7 +24,7 @@ class EmailFetcher
 
     public $mailGateway;
 
-    public function __construct(\Attachment $attachmentGateway,Mail $mailGateway)
+    public function __construct(\Attachment $attachmentGateway, Mail $mailGateway)
     {
 //        $config = parse_ini_file('.env');
 //        $this->hostname = $config[`IMAP_HOST`];
@@ -40,10 +41,11 @@ class EmailFetcher
         $server = new Server('imap.gmail.com');
         $connection = $server->authenticate($email, $password);
 
-      //  $search = new SearchExpression();
+        //  $search = new SearchExpression();
         $mailbox = $connection->getMailbox('INBOX');
         $messages = $mailbox->getMessages();
-
+        $threads = $mailbox->getThread();
+        //  var_dump($threads);
         foreach ($messages as $message) {
             $emailData = new stdClass();
             $headers = $message->getHeaders();
@@ -51,7 +53,7 @@ class EmailFetcher
             $emailData->from = $message->getFrom()->getAddress();
             $emailData->to = $message->getTo();
             $emailData->cc = $message->getCc();
-       //     var_dump($emailData->cc);
+            //     var_dump($emailData->cc);
             $emailData->body = $message->getBodyText();
             $emailData->replied_to = null;
             $emailData->sent_date = $message->getDate()->format('Y-m-d H:i:s');
@@ -64,18 +66,22 @@ class EmailFetcher
             // Insert the email
 
             $emailId = $this->mailGateway->insert($emailData);
+            if ($emailId == false) {
 
-            // Insert attachments
-            foreach ($message->getAttachments() as $attachment) {
-                $attachmentData = new stdClass();
-                $attachmentData->email_id = $emailId;
-                $attachmentData->file_name = $attachment->getFileName();
-                $attachmentData->file_path = ''; // TODO: Set the file path
-                $attachmentData->file_type = $attachment->getType();
-                $attachmentData->data = $attachment->getContent();
+            }else{
+                // Insert attachments
+                foreach ($message->getAttachments() as $attachment) {
+                    $attachmentData = new stdClass();
+                    $attachmentData->email_id = $emailId;
+                    $attachmentData->file_name = $attachment->getFileName();
+                    $attachmentData->file_path = ''; // TODO: Set the file path
+                    $attachmentData->file_type = $attachment->getType();
+                    $attachmentData->data = $attachment->getContent();
 
-                $this->attachmentGateway->insert($attachmentData, $emailId);
+                    $this->attachmentGateway->insert($attachmentData, $emailId);
+                }
             }
+
 
 
         }
@@ -101,14 +107,15 @@ class EmailFetcher
 
         //Recipients
         try {
-            $mail->setFrom($email['from'], $email['name'] . " " . $email['surname']);
+            $mail->setFrom($email['from'], $email['fromName']);
             $mail->addAddress($email['to']); //Add a recipient
-            foreach ($email['cc'] as $cc) {
-                $mail->addCC($cc);
-            }
-            foreach ($email['bcc'] as $bcc) {
-                $mail->addBCC($bcc);
-            }
+            $mail->addCustomHeader("In-Reply-To", $email['replyTo']);
+//            foreach ($email['cc'] as $cc) {
+//                $mail->addCC($cc);
+//            }
+//            foreach ($email['bcc'] as $bcc) {
+//                $mail->addBCC($bcc);
+//            }
         } catch (Exception $e) {
             http_response_code(400);
             json_encode("Invalid recipient parameters!");
@@ -122,13 +129,16 @@ class EmailFetcher
         //save attachments to the database
         $filePath = 'C:\xampp\tmp';
         //  echo json_encode($attachments);
-        try {
-            $mail->addAttachment($attachments['tmp_name'], $attachments['name']);
-        } catch (Exception $e) {
-            http_response_code(400);
-            json_encode("Invalid attachment parameters!");
-        }
+        if ($attachments != null) {
 
+            try {
+                $mail->addAttachment($attachments['tmp_name'], $attachments['name']);
+            } catch (Exception $e) {
+                http_response_code(400);
+                json_encode("Invalid attachment parameters!");
+            }
+
+        }
         // Send the email
         try {
             if (!$mail->send()) {
@@ -142,6 +152,57 @@ class EmailFetcher
         }
     }
 
+    public function fetchSent($email, $password)
+    {
+
+        $server = new Server('imap.gmail.com');
+
+        $connection = $server->authenticate($email, $password);
+        $mailbox = $connection->getMailboxes();
+      //  var_dump($mailbox);
+        $search = new SearchExpression();
+        $search->addCondition(new \Ddeboer\Imap\Search\Flag\Unanswered());
+        $mailbox = $connection->getMailbox('[Gmail]/Sent Mail');
+        $messages = $mailbox->getMessages();
+     //   var_dump($messages);
+        foreach ($messages as $message) {
+            $emailData = new stdClass();
+            $headers = $message->getHeaders();
+            $emailData->uid = $message->getId();
+            $emailData->from = $message->getFrom()->getAddress();
+            $emailData->to = $message->getTo();
+            $emailData->cc = $message->getCc();
+            //     var_dump($emailData->cc);
+            $emailData->body = $message->getBodyText();
+            $emailData->replied_to = null;
+            $emailData->sent_date = $message->getDate()->format('Y-m-d H:i:s');
+            $emailData->is_read = $message->isSeen() ? 1 : 0;
+            $emailData->is_sent = $message->isAnswered() ? 1 : 0;
+            $emailData->is_draft = $message->isDraft() ? 1 : 0;
+            $emailData->has_attachment = (count($message->getAttachments()) > 0) ? 1 : 0;
+            $emailData->created_at = date('Y-m-d H:i:s');
+            $emailData->subject = $message->getSubject();
+            // Insert the email
+        //    var_dump($emailData);
+            $emailId = $this->mailGateway->insert($emailData);
+            $emailId = $this->mailGateway->insert($emailData);
+            if (!$emailId) {
+
+            }
+            // Insert attachments
+            foreach ($message->getAttachments() as $attachment) {
+                $attachmentData = new stdClass();
+                $attachmentData->email_id = $emailId;
+                $attachmentData->file_name = $attachment->getFileName();
+                $attachmentData->file_path = ''; // TODO: Set the file path
+                $attachmentData->file_type = $attachment->getType();
+                $attachmentData->data = $attachment->getContent();
+
+                $this->attachmentGateway->insert($attachmentData, $emailId);
+            }
+
+        }
+    }
 }
 
 ?>

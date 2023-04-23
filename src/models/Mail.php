@@ -23,7 +23,10 @@ class Mail
         $stmt->bindParam(':uid', $uid);
         $stmt->execute();
         $email = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $email;
+        if ($email && $stmt->rowCount() > 0) {
+            return $email;
+        }
+        return false;
     }
 
     public function getAll($email)
@@ -40,6 +43,10 @@ class Mail
     public function insert($email)
     {
       //  var_dump($email);
+        $existingEmail = $this->get($email->uid);
+        if ($existingEmail) {
+            return false;
+        }
         $query = "INSERT INTO emails (uid, subject, `from`,sent_date, body) VALUES (:uid, :subject, :from, :sent_date, :body)";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':uid', $email->uid);
@@ -55,11 +62,7 @@ class Mail
     //    $this->insertRecipients($email);
         return $email;
     }
-    public function repliedTo($email)
-    {
 
-
-    }
     public function insertRecipients($mailing_list)
     {
         foreach ($mailing_list->to as $recipient) {
@@ -78,9 +81,7 @@ class Mail
         }
         return false;
     }
-    public function checkIfReply($to){
 
-    }
     public function update($email, $data)
     {
         $query = "UPDATE emails SET subject = :subject, `from` = :from, `to` = :to, sent_date = :sent_date, body = :body WHERE uid = :uid";
