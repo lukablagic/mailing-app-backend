@@ -54,10 +54,10 @@ class Auth
         return $token;
     }
 
-    public function logout($email, $password)
+    public function logout($token)
     {
-        $user = $this->userGateway->updateUserToken(null, $email,$password);
-        if ($user) {
+        $response = $this->userGateway->removeUserToken($token);
+        if ($response) {
             return true;
         }
 

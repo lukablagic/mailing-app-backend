@@ -1,5 +1,7 @@
 <?php
-
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+header('Access-Control-Allow-Headers: Origin, Content-Type, Accept, Authorization');
 //9.	PUT /settings/display-images - Updates the user's preference for displaying images in emails
 //10.	POST /auth- Authenticates a user and generates a session token
 //11.	POST /auth - Destroys the user's session token
@@ -13,26 +15,15 @@ class AuthController {
         $this->auth = $auth;
 
     }
-    public function processRequest(string $method) {
+    public function processRequest(string $method, ?string $id) {
+        header('Access-Control-Allow-Origin: *');
+        header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+        header('Access-Control-Allow-Headers: Origin, Content-Type, Accept, Authorization');
         switch ($method) {
             case "POST":
-                $data = json_decode(file_get_contents("php://input"), true);
+
                 
-                if (empty($data)) {
-                    http_response_code(400);
-                    echo json_encode(["error" => "Invalid input data"]);
-                    break;
-                }
-    
-                if (empty($data["action"])) {
-                    http_response_code(400);
-                    echo json_encode(["error" => "Action parameter is required"]);
-                    break;
-                }
-    
-                $action = $data["action"];
-                
-                switch ($action) {
+                switch ($id) {
                     case "login":
                         $this->login();
                         break;
@@ -55,6 +46,7 @@ class AuthController {
     }
     
     public function login() {
+
         $data = json_decode(file_get_contents("php://input"), true);
         $email = $data["email"];
         $password = $data["password"];
@@ -75,9 +67,8 @@ class AuthController {
 
     public function logout() {
         $data = json_decode(file_get_contents("php://input"), true);
-        $email = $data["email"];
-        $password = $data["password"];
-        if ($this->auth->logout($email, $password)) {
+          $token = $data["token"];
+        if ($this->auth->logout($token)) {
             http_response_code(200);
             echo json_encode([
                 "message" => "Logout successful"

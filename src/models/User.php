@@ -46,7 +46,18 @@ class User
         }
         return false;
     }
+    public function getUserId($email,$password){
+        $stmt = $this->conn->prepare("SELECT id FROM users WHERE email = :email AND password = :password");
+        $stmt->bindParam(':email', $email);
+        $stmt->bindParam(':password', $password);
+        $stmt->execute();
+        $userId = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($userId && $stmt->rowCount() > 0) {
 
+            return $userId;
+        }
+        return false;
+    }
     public function getAllUsers()
     {
         $stmt = $this->conn->prepare("SELECT * FROM users WHERE active = 1");
@@ -84,19 +95,15 @@ class User
         return false;
     }
 
-    public function updateUserToken($token, $email, $password)
+    public function removeUserToken($token)
     {
-
-        $stmt = $this->conn->prepare("UPDATE users SET token = :token WHERE email = :email AND password = :password");
+        $stmt = $this->conn->prepare("UPDATE users SET token = NULL WHERE token = :token");
         $stmt->bindParam(':token', $token);
-        $stmt->bindParam(':email', $email);
-        $stmt->bindParam(':password', $password);
         $stmt->execute();
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-        if ($stmt->rowCount() > 0) {
-            return $user;
+        if ($stmt->execute()) {
+            return true;
         }
-        return $user;
+        return false;
     }
 
 }

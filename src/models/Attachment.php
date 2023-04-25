@@ -36,15 +36,13 @@ class Attachment
         $name = $attachment->file_name;
         $path = $attachment->file_path;
         $type = $attachment->file_type;
-     //   $data = file_get_contents($path);
-        $emailId = $email_id->id;
-        print_r($emailId);
+
         $data = $attachment->data;
         $stmt->bindParam(':name', $name);
         $stmt->bindParam(':path', $path);
         $stmt->bindParam(':type', $type);
         $stmt->bindParam(':data', $data);
-        $stmt->bindParam(':emails_id', $emailId);
+        $stmt->bindParam(':emails_id', $email_id);
 
         $stmt->execute();
     }

@@ -29,20 +29,22 @@ class Mail
         return false;
     }
 
-    public function getAll($email)
+    public function getAllRecieved($token)
     {
 
-        $query = "SELECT * FROM emails WHERE `to` = :to";
+        $query = "SELECT * FROM emails JOIN recipients ON recipients.emails_id = emails.id JOIN users ON users.id = recipients.users_id WHERE users.token = :token";
+
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':to', $email);
+        $stmt->bindParam(':token', $token);
         $stmt->execute();
         $emails = $stmt->fetchAll(PDO::FETCH_ASSOC);
         return $emails;
     }
 
-    public function insert($email)
+    public function insert($email, $userId)
     {
-      //  var_dump($email);
+        //var_dump($email);
+
         $existingEmail = $this->get($email->uid);
         if ($existingEmail) {
             return false;
@@ -55,29 +57,57 @@ class Mail
         //   $stmt->bindParam(':to', $email->to);
         $stmt->bindParam(':sent_date', $email->sent_date);
         $stmt->bindParam(':body', $email->body);
-        $conv  = 5;
-    //    $stmt->bindParam(':conversations_id', $conv);
+        $conv = 5;
+        //    $stmt->bindParam(':conversations_id', $conv);
         $stmt->execute();
-        $email->id = $this->conn->lastInsertId();
-    //    $this->insertRecipients($email);
-        return $email;
+
+        $emailId = $this->getEmailId($email->uid);
+        //  var_dump($emailId);
+        $this->setRecipients($email->to, $emailId['id'], $userId);
+        //    var_dump($emailId);
+        return $emailId;
     }
 
-    public function insertRecipients($mailing_list)
+    public function setRecipients($recipients, $emailId, $userID)
     {
-        foreach ($mailing_list->to as $recipient) {
+        //   var_dump($recipients);
+        foreach ($recipients as $recipient) {
             $query = "INSERT INTO recipients (emails_id,users_id) VALUES (:emails_id, :users_id)";
-            $from = $recipient->getFullAddress();
 
+            $from = $recipient->getAddress();
             $user = $this->userGateway->getUserByEmail($from);
-            $userId =  $user['id'];
+            $userId = $user['id'];
             $stmt = $this->conn->prepare($query);
-            $stmt->bindParam(':emails_id', $mailing_list->id);
+            $stmt->bindParam(':emails_id', $emailId);
             $stmt->bindParam(':users_id', $userId);
             $stmt->execute();
-            $mailing_list->id = $this->conn->lastInsertId();
-           return true;
+        }
 
+    }
+
+    public function getEmailId($uid)
+    {
+        $query = "SELECT id FROM emails WHERE uid = :uid";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':uid', $uid);
+        $stmt->execute();
+        $email = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($email && $stmt->rowCount() > 0) {
+            return $email;
+        }
+        return false;
+    }
+
+    public function checkMailExists($uid)
+    {
+        $query = "SELECT id FROM emails WHERE uid = :uid";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':uid', $uid);
+        $stmt->execute();
+        $email = $stmt->fetch(PDO::FETCH_ASSOC);
+        //var_dump($email);
+        if ($email && $stmt->rowCount() > 0) {
+            return true;
         }
         return false;
     }
@@ -112,8 +142,6 @@ class Mail
         $emails = $stmt->fetchAll(PDO::FETCH_ASSOC);
         return $emails;
     }
-
-
 
 
 }

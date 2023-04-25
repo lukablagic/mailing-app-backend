@@ -1,5 +1,7 @@
 <?php
-
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+header('Access-Control-Allow-Headers: Origin, Content-Type, Accept, Authorization');
 //require '../config/Database.php';
 //require '../models/Mail.php';
 //require_once '../vendor/psr/http-message/src/MessageInterface.php';
@@ -15,7 +17,6 @@ require_once __DIR__ . '/../../vendor/autoload.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-header('Access-Control-Allow-Origin: *');
 //1.	GET /emails - Retrieves a list of all received emails from the MySQL database
 //2.	GET /emails/{id} - Retrieves the details of a specific email by its ID
 
@@ -62,8 +63,13 @@ private function authenticateCall(){
 }
     private function processCollectionRequest(string $method): void
     {
+        header('Access-Control-Allow-Origin: *');
+        header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+        header('Access-Control-Allow-Headers: Origin, Content-Type, Accept, Authorization');
+
         $user  = $this->authenticateCall();
         if(!$user){
+            header();
             http_response_code(401);
             echo json_encode(["message" => "Unauthorized"]);
             return;
@@ -74,8 +80,12 @@ private function authenticateCall(){
                 //fetch all emails from imap server
                 $this->emailFetcherGateway->fetchEmails($user['email'],$user['password']);
                  $this->emailFetcherGateway->fetchSent($user['email'],$user['password']);
+                $response = $this->mailGateway->getAllRecieved($user['token']);
 
-                //1.	GET /emails - Retrieves a list of all received emails from the MySQL database
+                http_response_code(200);
+               echo json_encode([ "message" => "Emails fetched",
+                    "emails" => $response
+               ]);
           //    echo json_encode($this->mailGateway->getAll($user['email']));
                 break;
             //3.	POST /emails - Sends an email using SMTP protocol to one or more recipients
