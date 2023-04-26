@@ -32,7 +32,7 @@ class Mail
     public function getAllRecieved($token)
     {
 
-        $query = "SELECT * FROM emails JOIN recipients ON recipients.emails_id = emails.id JOIN users ON users.id = recipients.users_id WHERE users.token = :token";
+        $query = "SELECT  emails.id, uid,subject,`from`,body,replied_to,sent_date,is_read,is_draft,is_sent,has_attachment  FROM emails  JOIN recipients ON recipients.emails_id = emails.id JOIN users ON users.id = recipients.users_id WHERE users.token = :token";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':token', $token);

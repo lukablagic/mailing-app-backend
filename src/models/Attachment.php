@@ -42,6 +42,7 @@ class Attachment
         $stmt->bindParam(':path', $path);
         $stmt->bindParam(':type', $type);
         $stmt->bindParam(':data', $data);
+
         $stmt->bindParam(':emails_id', $email_id);
 
         $stmt->execute();
