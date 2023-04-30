@@ -34,18 +34,19 @@ class MailController
     private $emailFetcherGateway;
     private $attachmentGateway;
 
-    public function __construct( Mail $mailGateway, User $userGateway, EmailFetcher $emailFetcherGateway,Attachment $attachmentGateway) {
+    public function __construct(Mail $mailGateway, User $userGateway, EmailFetcher $emailFetcherGateway, Attachment $attachmentGateway)
+    {
         $this->mailGateway = $mailGateway;
         $this->userGateway = $userGateway;
         $this->emailFetcherGateway = $emailFetcherGateway;
         $this->attachmentGateway = $attachmentGateway;
     }
 
-    public function processRequest(string $method, ?string $id): void
+    public function processRequest(string $method, ?string $id, ?string $action): void
     {
         if ($id) {
 
-            $this->processResourceRequest($method, $id);
+            $this->processResourceRequest($method, $id, $action);
 
         } else {
 
@@ -53,22 +54,25 @@ class MailController
 
         }
     }
-private function authenticateCall(){
-    $headers = apache_request_headers();
-    $token = $_SERVER['HTTP_AUTHORIZATION'] ?? null;
 
-   $token = str_replace('Bearer ', '', $token);
-  //  echo json_encode($token);
-    return $this->userGateway->getUserByToken($token);
-}
+    private function authenticateCall()
+    {
+        $headers = apache_request_headers();
+        $token = $_SERVER['HTTP_AUTHORIZATION'] ?? null;
+
+        $token = str_replace('Bearer ', '', $token);
+        //  echo json_encode($token);
+        return $this->userGateway->getUserByToken($token);
+    }
+
     private function processCollectionRequest(string $method): void
     {
         header('Access-Control-Allow-Origin: *');
         header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
         header('Access-Control-Allow-Headers: Origin, Content-Type, Accept, Authorization');
 
-        $user  = $this->authenticateCall();
-        if(!$user){
+        $user = $this->authenticateCall();
+        if (!$user) {
 
             http_response_code(401);
             echo json_encode(["message" => "Unauthorized"]);
@@ -78,15 +82,15 @@ private function authenticateCall(){
         switch ($method) {
             case "GET":
                 //fetch all emails from imap server
-                $this->emailFetcherGateway->fetchEmails($user['email'],$user['password']);
-                 $this->emailFetcherGateway->fetchSent($user['email'],$user['password']);
-                $response = $this->mailGateway->getAllRecieved($user['token']);
+                $this->emailFetcherGateway->fetchInbox($user['email'], $user['password']);
+                $this->emailFetcherGateway->fetchSent($user['email'], $user['password']);
+                $response = $this->mailGateway->getAllRecieved($user['email']);
 
                 http_response_code(200);
-               echo json_encode([ "message" => "Emails fetched",
+                echo json_encode(["message" => "Emails fetched",
                     "emails" => $response
-               ]);
-          //    echo json_encode($this->mailGateway->getAll($user['email']));
+                ]);
+                //    echo json_encode($this->mailGateway->getAll($user['email']));
                 break;
             //3.	POST /emails - Sends an email using SMTP protocol to one or more recipients
             case "POST":
@@ -94,15 +98,15 @@ private function authenticateCall(){
                 var_dump($jsonString);
                 $data = json_decode($jsonString, true);
 
-                if (isset($_FILES['fileName'])){
+                if (isset($_FILES['fileName'])) {
                     $attachment = $_FILES['fileName'];
-                    $this->emailFetcherGateway->sendEmail($data,$attachment);
+                    $this->emailFetcherGateway->sendEmail($data, $attachment);
                 }
-                $this->emailFetcherGateway->sendEmail($data,null);
+                $this->emailFetcherGateway->sendEmail($data, null);
                 http_response_code(201);
                 echo json_encode([
                     "message" => "Message sent",
-             //       "id" => $id
+                    //       "id" => $id
                 ]);
                 break;
 
@@ -111,47 +115,42 @@ private function authenticateCall(){
                 header("Allow: GET, POST");
         }
     }
-    private function processResourceRequest(string $method, string $id): void
+
+    private function processResourceRequest(string $method, string $id, $action): void
     {
-        $product = $this->mailGateway->get($id);
-        $rows = [];
-        if (!$product) {
-            http_response_code(404);
-            echo json_encode(["message" => "Mail not found"]);
+        header('Access-Control-Allow-Origin: *');
+        header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+        header('Access-Control-Allow-Headers: Origin, Content-Type, Accept, Authorization');
+
+        $user = $this->authenticateCall();
+      //  var_dump($user);
+        if (!$user) {
+
+            http_response_code(401);
+            echo json_encode(["message" => "Unauthorized"]);
             return;
         }
-
         switch ($method) {
 
-            case "GET":
-                echo json_encode($product);
-                break;
+            case "PUT":
+                $data = json_decode(file_get_contents("php://input"), true);
+                $status = $data["status"];
+                $this->emailFetcherGateway->updateEmailStatus($user['email'], $user['password'], $id, $status);
+                $this->mailGateway->updateStatus($id, $status);
 
-            case "PATCH":
-                $data = (array)json_decode(file_get_contents("php://input"), true);
-
-             //   $errors = $this->getValidationErrors($data, false);
-
-                if (!empty($errors)) {
-                    http_response_code(422);
-                    echo json_encode(["errors" => $errors]);
-                    break;
-                }
-
-                $rows = $this->gateway->update($product, $data);
+              //  var_dump($data);
 
                 echo json_encode([
-                    "message" => "Product $id updated",
-                    "rows" => $rows
+                    "message" => "Email with uid $id status updated to $status",
+                //    "email" => $email
                 ]);
                 break;
 
             case "DELETE":
-                $rows = $this->gateway->delete($id);
 
                 echo json_encode([
                     "message" => "Product $id deleted",
-                    "rows" => $rows
+                    //        "rows" => $rows
                 ]);
                 break;
 
@@ -160,8 +159,6 @@ private function authenticateCall(){
                 header("Allow: GET, PATCH, DELETE");
         }
     }
-
-
 
 
 }

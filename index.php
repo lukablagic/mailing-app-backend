@@ -40,9 +40,7 @@
     $parts = explode("/", $_SERVER["REQUEST_URI"]);
     $endpoint = $parts[1] ?? null;
     $id = $parts[2] ?? null;
-
-
-
+    $action = $parts[3] ?? null;
 
     $database = new Database("DB_HOST", "DB_NAME", "DB_USER", "DB_PASSWORD");
     $userGateway = new User($database);
@@ -54,7 +52,7 @@
     switch ($endpoint) {
         case 'emails':
             $mailController = new MailController($mailGateway, $userGateway, $emailFetcherGateway,$attachmentGateway);
-            $mailController->processRequest($_SERVER["REQUEST_METHOD"], $id);
+            $mailController->processRequest($_SERVER["REQUEST_METHOD"], $id,$action);
              break;
         case 'auth':
             $authController = new AuthController($authGateway);

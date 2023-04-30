@@ -15,6 +15,7 @@ use Ddeboer\Imap\Connection;
 use Ddeboer\Imap\Message\EmailAddress;
 use Ddeboer\Imap\Message\Attachment;
 use \Ddeboer\Imap\Search\Flag\Unseen;
+use \Ddeboer\imap\MailboxInterface;
 
 class EmailFetcher
 {
@@ -32,27 +33,32 @@ class EmailFetcher
         $this->userGateway = $userGateway;
         $this->attachmentGateway = $attachmentGateway;
 
-
     }
 
-    public function saveEmail($message, $email, $password)
+    public function saveEmail(\Ddeboer\Imap\MessageInterface $message, $email, $password)
     {
         $emailData = new stdClass();
-        $headers = $message->getHeaders();
+
+
+        $emailData->in_reply_to = $message->getInReplyTo();
+        // var_dump($emailData->in_reply_to);
+        if ($emailData->in_reply_to == null) {
+            $emailData->in_reply_to = [];
+        }
         $emailData->uid = $message->getId();
         $emailData->from = $message->getFrom()->getAddress();
         $emailData->to = $message->getTo();
         $emailData->cc = $message->getCc();
         //     var_dump($emailData->cc);
         $emailData->body = $message->getBodyText();
+        $emailData->has_attachemnt = $message->hasAttachments() ? 1 : 0;
         $emailData->replied_to = null;
         $emailData->sent_date = $message->getDate()->format('Y-m-d H:i:s');
         $emailData->is_read = $message->isSeen() ? 1 : 0;
-        $emailData->is_sent = $message->isAnswered() ? 1 : 0;
-        $emailData->is_draft = $message->isDraft() ? 1 : 0;
         $emailData->has_attachment = (count($message->getAttachments()) > 0) ? 1 : 0;
         $emailData->created_at = date('Y-m-d H:i:s');
         $emailData->subject = $message->getSubject();
+
         // Insert the email
         $userId = $this->userGateway->getUserId($email, $password);
         $emailId = $this->mailGateway->insert($emailData, $userId);
@@ -67,19 +73,21 @@ class EmailFetcher
             $attachmentData->file_type = $attachment->getType();
             $attachmentData->data = $attachment->getContent();
 
-            $this->attachmentGateway->insert($attachmentData, $emailId);
+            $this->attachmentGateway->insert($attachmentData, $emailId['id']);
         }
 
     }
 
-    public function fetchEmails($email, $password)
+    public function fetchInbox($email, $password)
     {
         $server = new Server('imap.gmail.com');
         $connection = $server->authenticate($email, $password);
 
         //  $search = new SearchExpression();
         $mailbox = $connection->getMailbox('INBOX');
+
         $messages = $mailbox->getMessages();
+        // var_dump($connection->getMailbox('INBOX')->getThread());
         foreach ($messages as $message) {
             if (!$this->mailGateway->checkMailExists($message->getId())) {
                 $this->saveEmail($message, $email, $password);
@@ -89,24 +97,24 @@ class EmailFetcher
         header("HTTP/1.1 200 OK");
         //  echo json_encode(['status' => 'success']);
     }
+
     public function fetchSent($email, $password)
     {
 
         $server = new Server('imap.gmail.com');
 
         $connection = $server->authenticate($email, $password);
-        $mailbox = $connection->getMailboxes();
-        //  var_dump($mailbox);
-        $search = new SearchExpression();
-        $search->addCondition(new \Ddeboer\Imap\Search\Flag\Unanswered());
         $mailbox = $connection->getMailbox('[Gmail]/Sent Mail');
         $messages = $mailbox->getMessages();
+
         foreach ($messages as $message) {
-            if ($this->mailGateway->checkMailExists($message->getId())) {
-                $this->saveEmail($message, $email, $password);
-            }
+
+            // if ($this->mailGateway->checkMailExists($message->getId())) {
+            $this->saveEmail($message, $email, $password);
+            //}
         }
     }
+
     public function sendEmail($email, $attachments)
     {
         // Instantiate a new PHPMailer object
@@ -168,6 +176,38 @@ class EmailFetcher
         }
     }
 
+    function updateEmailStatus($email, $password, $id, $status)
+    {
+
+    //var_dump($status);
+        $uid = $this->mailGateway->getUid($id);
+        if (!$uid ) {
+            return json_encode(['status' => 'Invalid email id!']);
+        }
+
+        $server = new Server('imap.gmail.com');
+        $connection = $server->authenticate($email, $password);
+
+        $mailbox = $connection->getMailbox('INBOX');
+        $messages = $mailbox->getMessages();
+        foreach ($messages as $message) {
+            if ($message->getId() == $uid) {
+                if ($message->isSeen() == $status) {
+                    return json_encode(['status' => 'ID doesnt exist!']);
+                }
+                if ($status) {
+                    $message->markAsSeen();
+                    return "Email marked as read!";
+                } else {
+                    $message->clearFlag('\Seen');
+                    return "Email marked as unseen!";
+                }
+
+            }
+
+        }
+    }
 }
+
 
 ?>

@@ -29,13 +29,37 @@ class Mail
         return false;
     }
 
-    public function getAllRecieved($token)
+    public function getUid($id){
+        $query = "SELECT * FROM emails WHERE id = :id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':id', $id);
+        $stmt->execute();
+        $email = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($email && $stmt->rowCount() > 0) {
+            return $email['uid'];
+        }
+        return false;
+    }
+    public function updateStatus($uid, $status)
+    {
+        $query = "UPDATE emails SET is_read = :status WHERE uid = :uid";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':uid', $uid);
+        $stmt->bindParam(':status', $status);
+        $stmt->execute();
+    }
+
+    public function getAllRecieved($email)
     {
 
-        $query = "SELECT  emails.id, uid,subject,`from`,body,replied_to,sent_date,is_read,is_draft,is_sent,has_attachment  FROM emails  JOIN recipients ON recipients.emails_id = emails.id JOIN users ON users.id = recipients.users_id WHERE users.token = :token";
+        $query = "SELECT emails.id,in_reply_to, uid,subject,`from`,body,sent_date,is_read,has_attachment 
+FROM emails
+JOIN recipients ON recipients.emails_id = emails.id
+JOIN users ON users.id = recipients.users_id
+WHERE users.email = :email";
 
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':token', $token);
+        $stmt->bindParam(':email', $email);
         $stmt->execute();
         $emails = $stmt->fetchAll(PDO::FETCH_ASSOC);
         return $emails;
@@ -49,38 +73,37 @@ class Mail
         if ($existingEmail) {
             return false;
         }
-        $query = "INSERT INTO emails (uid, subject, `from`,sent_date, body) VALUES (:uid, :subject, :from, :sent_date, :body)";
+        $query = "INSERT INTO emails (uid, subject, `from`,sent_date,in_reply_to, body,is_read,has_attachment) VALUES (:uid, :subject, :from, :sent_date,:in_reply_to, :body,:is_read,:has_attachment)";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':uid', $email->uid);
         $stmt->bindParam(':subject', $email->subject);
+        $stmt->bindParam(':is_read', $email->is_read);
+        $stmt->bindParam(':has_attachment', $email->has_attachment);
+        $stmt->bindParam(':in_reply_to', $email->in_reply_to[0]);
         $stmt->bindParam(':from', $email->from);
-        //   $stmt->bindParam(':to', $email->to);
         $stmt->bindParam(':sent_date', $email->sent_date);
         $stmt->bindParam(':body', $email->body);
-        $conv = 5;
-        //    $stmt->bindParam(':conversations_id', $conv);
         $stmt->execute();
-
         $emailId = $this->getEmailId($email->uid);
-        //  var_dump($emailId);
         $this->setRecipients($email->to, $emailId['id'], $userId);
-        //    var_dump($emailId);
         return $emailId;
     }
 
-    public function setRecipients($recipients, $emailId, $userID)
-    {
-        //   var_dump($recipients);
-        foreach ($recipients as $recipient) {
-            $query = "INSERT INTO recipients (emails_id,users_id) VALUES (:emails_id, :users_id)";
 
-            $from = $recipient->getAddress();
-            $user = $this->userGateway->getUserByEmail($from);
-            $userId = $user['id'];
-            $stmt = $this->conn->prepare($query);
-            $stmt->bindParam(':emails_id', $emailId);
-            $stmt->bindParam(':users_id', $userId);
-            $stmt->execute();
+    public function setRecipients($recipients, $emailId, $users_id)
+    {
+        foreach ($recipients as $recipient) {
+            if (!$recipient->getAddress() == null) {
+                $query = "INSERT INTO recipients (emails_id,users_id, `to`) VALUES (:emails_id,:users_id,:to)";
+                $stmt = $this->conn->prepare($query);
+
+                $stmt->bindParam(':emails_id', $emailId);
+                $stmt->bindParam(':users_id', $users_id['id']);
+                $address = $recipient->getAddress();
+                $stmt->bindParam(':to', $address);
+                $stmt->execute();
+            }
+
         }
 
     }
