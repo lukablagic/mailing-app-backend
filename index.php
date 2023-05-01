@@ -29,7 +29,7 @@
 
         if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD']))
             // may also be using PUT, PATCH, HEAD etc
-            header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+            header("Access-Control-Allow-Methods: GET, POST, OPTIONS,PUT");
 
         if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']))
             header("Access-Control-Allow-Headers: {$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']}");
@@ -51,7 +51,7 @@
 
     switch ($endpoint) {
         case 'emails':
-            $mailController = new MailController($mailGateway, $userGateway, $emailFetcherGateway,$attachmentGateway);
+            $mailController = new MailController($mailGateway, $emailFetcherGateway,$authGateway);
             $mailController->processRequest($_SERVER["REQUEST_METHOD"], $id,$action);
              break;
         case 'auth':

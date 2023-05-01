@@ -6,23 +6,27 @@ header('Access-Control-Allow-Headers: Origin, Content-Type, Accept, Authorizatio
 //10.	POST /auth- Authenticates a user and generates a session token
 //11.	POST /auth - Destroys the user's session token
 
-class AuthController {
+class AuthController
+{
 
     private $auth;
     private $userGateway;
 
-    public function __construct( Auth $auth) {
+    public function __construct(Auth $auth)
+    {
         $this->auth = $auth;
 
     }
-    public function processRequest(string $method, ?string $id) {
+
+    public function processRequest(string $method, ?string $id)
+    {
         header('Access-Control-Allow-Origin: *');
         header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
         header('Access-Control-Allow-Headers: Origin, Content-Type, Accept, Authorization');
         switch ($method) {
             case "POST":
 
-                
+
                 switch ($id) {
                     case "login":
                         $this->login();
@@ -31,21 +35,36 @@ class AuthController {
                         $this->logout();
                         break;
                     case "register":
-                            $this->register();
-                            break;
+                        $this->register();
+                        break;
+
                     default:
                         http_response_code(400);
                         echo json_encode(["error" => "Invalid action parameter"]);
                 }
-    
+
+                break;
+            case "GET":
+                $user = $this->auth->authenticateCall();
+                switch ($id) {
+                    case "user":
+                        http_response_code(200);
+                         echo json_encode($this->auth->getUserData());
+                        break;
+                    default:
+                        http_response_code(405);
+                        echo json_encode(["error" => "Invalid action parameter"]);
+                }
                 break;
             default:
                 http_response_code(405);
-                header("Allow: POST");
+                header("Allow: POST,GET");
+
         }
     }
-    
-    public function login() {
+
+    public function login()
+    {
 
         $data = json_decode(file_get_contents("php://input"), true);
         $email = $data["email"];
@@ -65,9 +84,10 @@ class AuthController {
         }
     }
 
-    public function logout() {
+    public function logout()
+    {
         $data = json_decode(file_get_contents("php://input"), true);
-          $token = $data["token"];
+        $token = $data["token"];
         if ($this->auth->logout($token)) {
             http_response_code(200);
             echo json_encode([
@@ -80,7 +100,9 @@ class AuthController {
             ]);
         }
     }
-    public function register() {
+
+    public function register()
+    {
         $data = json_decode(file_get_contents("php://input"), true);
 
         $name = $data["name"];
@@ -101,7 +123,8 @@ class AuthController {
             ]);
         }
     }
-    
+
 
 }
+
 ?>

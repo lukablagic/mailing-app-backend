@@ -30,16 +30,14 @@ use PHPMailer\PHPMailer\Exception;
 class MailController
 {
     public $mailGateway;
-    private $userGateway;
     private $emailFetcherGateway;
-    private $attachmentGateway;
+    private $authGateway;
 
-    public function __construct(Mail $mailGateway, User $userGateway, EmailFetcher $emailFetcherGateway, Attachment $attachmentGateway)
+    public function __construct(Mail $mailGateway, EmailFetcher $emailFetcherGateway, Auth $authGateway)
     {
         $this->mailGateway = $mailGateway;
-        $this->userGateway = $userGateway;
         $this->emailFetcherGateway = $emailFetcherGateway;
-        $this->attachmentGateway = $attachmentGateway;
+        $this->authGateway = $authGateway;
     }
 
     public function processRequest(string $method, ?string $id, ?string $action): void
@@ -55,23 +53,15 @@ class MailController
         }
     }
 
-    private function authenticateCall()
-    {
-        $headers = apache_request_headers();
-        $token = $_SERVER['HTTP_AUTHORIZATION'] ?? null;
 
-        $token = str_replace('Bearer ', '', $token);
-        //  echo json_encode($token);
-        return $this->userGateway->getUserByToken($token);
-    }
 
     private function processCollectionRequest(string $method): void
     {
         header('Access-Control-Allow-Origin: *');
-        header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+        header('Access-Control-Allow-Methods: GET, POST, OPTIONS,PUT');
         header('Access-Control-Allow-Headers: Origin, Content-Type, Accept, Authorization');
 
-        $user = $this->authenticateCall();
+        $user = $this->authGateway->authenticateCall();
         if (!$user) {
 
             http_response_code(401);
@@ -100,9 +90,9 @@ class MailController
 
                 if (isset($_FILES['fileName'])) {
                     $attachment = $_FILES['fileName'];
-                    $this->emailFetcherGateway->sendEmail($data, $attachment);
+                    $this->emailFetcherGateway->sendEmail($user['email'], $user['password'],$data, $attachment);
                 }
-                $this->emailFetcherGateway->sendEmail($data, null);
+                $this->emailFetcherGateway->sendEmail($user['email'], $user['password'],$data, null);
                 http_response_code(201);
                 echo json_encode([
                     "message" => "Message sent",
@@ -122,7 +112,7 @@ class MailController
         header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
         header('Access-Control-Allow-Headers: Origin, Content-Type, Accept, Authorization');
 
-        $user = $this->authenticateCall();
+        $user = $this->authGateway->authenticateCall();
       //  var_dump($user);
         if (!$user) {
 
@@ -136,13 +126,12 @@ class MailController
                 $data = json_decode(file_get_contents("php://input"), true);
                 $status = $data["status"];
                 $this->emailFetcherGateway->updateEmailStatus($user['email'], $user['password'], $id, $status);
+                var_dump($status);
                 $this->mailGateway->updateStatus($id, $status);
-
-              //  var_dump($data);
-
+                $responseStatus = strval($status);
+                http_response_code(200);
                 echo json_encode([
-                    "message" => "Email with uid $id status updated to $status",
-                //    "email" => $email
+                    "message" => "Email with id $id status updated to  $responseStatus",
                 ]);
                 break;
 

@@ -46,6 +46,16 @@ class User
         }
         return false;
     }
+    public function getUserData($token){
+        $stmt = $this->conn->prepare("SELECT id, name, surname,email,profile_picture FROM users WHERE token = :token");
+        $stmt->bindParam(':token', $token);
+        $stmt->execute();
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($user && $stmt->rowCount() > 0) {
+            return $user;
+        }
+        return false;
+    }
     public function getUserId($email,$password){
         $stmt = $this->conn->prepare("SELECT id FROM users WHERE email = :email AND password = :password");
         $stmt->bindParam(':email', $email);

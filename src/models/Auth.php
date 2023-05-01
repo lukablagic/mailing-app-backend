@@ -78,8 +78,28 @@ class Auth
 
         return false;
     }
+    public function authenticateCall()
+    {
+        $headers = apache_request_headers();
+        $token = $_SERVER['HTTP_AUTHORIZATION'] ?? null;
 
+        $token = str_replace('Bearer ', '', $token);
+        //  echo json_encode($token);
+        return $this->userGateway->getUserByToken($token);
+    }
+    public function getUserData()
+    {
 
+        $token = $_SERVER['HTTP_AUTHORIZATION'] ?? null;
+        $token = str_replace('Bearer ', '', $token);
+        $user =  $this->userGateway->getUserData($token);
+
+        if ($user) {
+            return $user;
+        }
+
+        return false;
+    }
 }
 
 ?>

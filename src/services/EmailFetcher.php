@@ -54,7 +54,7 @@ class EmailFetcher
         $emailData->has_attachemnt = $message->hasAttachments() ? 1 : 0;
         $emailData->replied_to = null;
         $emailData->sent_date = $message->getDate()->format('Y-m-d H:i:s');
-        $emailData->is_read = $message->isSeen() ? 1 : 0;
+        $emailData->is_read = $message->isSeen() ;
         $emailData->has_attachment = (count($message->getAttachments()) > 0) ? 1 : 0;
         $emailData->created_at = date('Y-m-d H:i:s');
         $emailData->subject = $message->getSubject();
@@ -115,7 +115,7 @@ class EmailFetcher
         }
     }
 
-    public function sendEmail($email, $attachments)
+    public function sendEmail($email,$password, $data,  $attachments)
     {
         // Instantiate a new PHPMailer object
         $mail = new PHPMailer(true);
@@ -124,16 +124,16 @@ class EmailFetcher
         $mail->isSMTP();
         $mail->Host = 'smtp.gmail.com';
         $mail->SMTPAuth = true;
-        $mail->Username = $email['from'];
-        $mail->Password = $email['password'];
+        $mail->Username = $email;
+        $mail->Password = $password;
         $mail->SMTPSecure = 'tls';
         $mail->Port = 587;
 
         //Recipients
         try {
-            $mail->setFrom($email['from'], $email['fromName']);
-            $mail->addAddress($email['to']); //Add a recipient
-            $mail->addCustomHeader("In-Reply-To", $email['replyTo']);
+            $mail->setFrom($data['from'], $data['fromName']);
+            $mail->addAddress($data['to']); //Add a recipient
+            $mail->addCustomHeader("In-Reply-To", $data['inReplyTo']);
 //            foreach ($email['cc'] as $cc) {
 //                $mail->addCC($cc);
 //            }
@@ -147,8 +147,8 @@ class EmailFetcher
 
         // Content
         $mail->isHTML(true);
-        $mail->Subject = $email['subject'];
-        $mail->Body = $email['body'];
+        $mail->Subject = $data['subject'];
+        $mail->Body = $data['body'];
 
         //save attachments to the database
         $filePath = 'C:\xampp\tmp';

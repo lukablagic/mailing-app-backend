@@ -40,12 +40,17 @@ class Mail
         }
         return false;
     }
-    public function updateStatus($uid, $status)
+    public function updateStatus($id, $status)
     {
-        $query = "UPDATE emails SET is_read = :status WHERE uid = :uid";
+        if($status){
+            $status = 1;
+        }else{
+            $status = 0;
+        }
+        $query = "UPDATE emails SET is_read = :is_read WHERE id = :id";
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':uid', $uid);
-        $stmt->bindParam(':status', $status);
+        $stmt->bindParam(':id', $id);
+        $stmt->bindParam(':is_read', $status);
         $stmt->execute();
     }
 
