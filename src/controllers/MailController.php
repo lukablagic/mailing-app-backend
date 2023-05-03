@@ -73,25 +73,23 @@ class MailController
             case "GET":
                 //fetch all emails from imap server
                 $this->emailFetcherGateway->fetchInbox($user['email'], $user['password']);
-                $this->emailFetcherGateway->fetchSent($user['email'], $user['password']);
-                $response = $this->mailGateway->getAllRecieved($user['email']);
+                    $this->emailFetcherGateway->fetchSent($user['email'], $user['password']);
+                $response = $this->mailGateway->getEmailsByUser($user['email']);
 
                 http_response_code(200);
                 echo json_encode(["message" => "Emails fetched",
                     "emails" => $response
                 ]);
-                //    echo json_encode($this->mailGateway->getAll($user['email']));
                 break;
             //3.	POST /emails - Sends an email using SMTP protocol to one or more recipients
             case "POST":
-                $jsonString = stripslashes($_POST['body']);
-                var_dump($jsonString);
-                $data = json_decode($jsonString, true);
+                $data = json_decode(file_get_contents("php://input"), true);
 
                 if (isset($_FILES['fileName'])) {
                     $attachment = $_FILES['fileName'];
                     $this->emailFetcherGateway->sendEmail($user['email'], $user['password'],$data, $attachment);
                 }
+
                 $this->emailFetcherGateway->sendEmail($user['email'], $user['password'],$data, null);
                 http_response_code(201);
                 echo json_encode([
@@ -101,6 +99,7 @@ class MailController
                 break;
 
             default:
+
                 http_response_code(405);
                 header("Allow: GET, POST");
         }

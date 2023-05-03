@@ -49,12 +49,19 @@ class EmailFetcher
         $emailData->from = $message->getFrom()->getAddress();
         $emailData->to = $message->getTo();
         $emailData->cc = $message->getCc();
+        $emailData->bcc = $message->getBcc();
         //     var_dump($emailData->cc);
-        $emailData->body = $message->getBodyText();
+
+        $emailData->body = $message->getBodyHtml();
+
+        if ($emailData->body == null) {
+            $emailData->body = $message->getBodyText();
+        }
+
         $emailData->has_attachemnt = $message->hasAttachments() ? 1 : 0;
         $emailData->replied_to = null;
         $emailData->sent_date = $message->getDate()->format('Y-m-d H:i:s');
-        $emailData->is_read = $message->isSeen() ;
+        $emailData->is_read = $message->isSeen();
         $emailData->has_attachment = (count($message->getAttachments()) > 0) ? 1 : 0;
         $emailData->created_at = date('Y-m-d H:i:s');
         $emailData->subject = $message->getSubject();
@@ -109,13 +116,13 @@ class EmailFetcher
 
         foreach ($messages as $message) {
 
-            // if ($this->mailGateway->checkMailExists($message->getId())) {
+          //   if ($this->mailGateway->checkMailExists($message->getId())) {
             $this->saveEmail($message, $email, $password);
-            //}
+           // }
         }
     }
 
-    public function sendEmail($email,$password, $data,  $attachments)
+    public function sendEmail($email, $password, $data, $attachments)
     {
         // Instantiate a new PHPMailer object
         $mail = new PHPMailer(true);
@@ -131,15 +138,29 @@ class EmailFetcher
 
         //Recipients
         try {
-            $mail->setFrom($data['from'], $data['fromName']);
-            $mail->addAddress($data['to']); //Add a recipient
+            $mail->setFrom($email);
+            if ($data['to'] != null ) {
+                foreach ($data['to'] as $to) {
+                    var_dump($to);
+                    $mail->addAddress($to);
+
+                }
+            }
             $mail->addCustomHeader("In-Reply-To", $data['inReplyTo']);
-//            foreach ($email['cc'] as $cc) {
-//                $mail->addCC($cc);
-//            }
-//            foreach ($email['bcc'] as $bcc) {
-//                $mail->addBCC($bcc);
-//            }
+
+            if ($data['cc'] != null ) {
+                foreach ($data['cc'] as $cc) {
+                    $mail->addCC($cc);
+
+                }
+            }
+
+            if ($data['bcc'] != null ) {
+                foreach ($data['bcc'] as $bcc) {
+
+                    $mail->addBCC($bcc);
+                }
+            }
         } catch (Exception $e) {
             http_response_code(400);
             json_encode("Invalid recipient parameters!");
@@ -171,17 +192,17 @@ class EmailFetcher
 
 
         } catch (Exception $e) {
-            json_encode('Message could not be sent.');
-            json_encode('Mailer Error: ' . $mail->ErrorInfo);
+            echo json_encode('Message could not be sent.');
+            echo json_encode('Mailer Error: ' . $mail->ErrorInfo);
         }
     }
 
     function updateEmailStatus($email, $password, $id, $status)
     {
 
-    //var_dump($status);
+        //var_dump($status);
         $uid = $this->mailGateway->getUid($id);
-        if (!$uid ) {
+        if (!$uid) {
             return json_encode(['status' => 'Invalid email id!']);
         }
 

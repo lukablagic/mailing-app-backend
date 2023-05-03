@@ -54,14 +54,26 @@ class Mail
         $stmt->execute();
     }
 
-    public function getAllRecieved($email)
-    {
-
-        $query = "SELECT emails.id,in_reply_to, uid,subject,`from`,body,sent_date,is_read,has_attachment 
-FROM emails
-JOIN recipients ON recipients.emails_id = emails.id
-JOIN users ON users.id = recipients.users_id
-WHERE users.email = :email";
+    public function getEmailsByUser($email) {
+        $query = "SELECT 
+        emails.id, 
+        emails.in_reply_to, 
+        emails.uid, 
+        emails.subject, 
+        emails.`from`, 
+        emails.body, 
+        emails.sent_date, 
+        emails.is_read, 
+        emails.has_attachment,
+        GROUP_CONCAT(DISTINCT IF(recipients_type.type = 'to', recipients.`to`, NULL)) AS to_recipients,
+        GROUP_CONCAT(DISTINCT IF(recipients_type.type = 'cc', recipients.`to`, NULL)) AS cc_recipients,
+        GROUP_CONCAT(DISTINCT IF(recipients_type.type = 'bcc', recipients.`to`, NULL)) AS bcc_recipients
+    FROM emails
+    LEFT JOIN recipients ON recipients.emails_id = emails.id
+    LEFT JOIN recipients_type ON recipients_type.id = recipients.recipients_type_id
+    JOIN users ON users.id = recipients.users_id
+    WHERE users.email = :email
+    GROUP BY emails.id";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':email', $email);
@@ -70,9 +82,9 @@ WHERE users.email = :email";
         return $emails;
     }
 
+
     public function insert($email, $userId)
     {
-        //var_dump($email);
 
         $existingEmail = $this->get($email->uid);
         if ($existingEmail) {
@@ -90,28 +102,55 @@ WHERE users.email = :email";
         $stmt->bindParam(':body', $email->body);
         $stmt->execute();
         $emailId = $this->getEmailId($email->uid);
-        $this->setRecipients($email->to, $emailId['id'], $userId);
+        $recipients = $this->combineRecipients($email->to, $email->cc, $email->bcc);
+        var_dump($recipients);
+        $this->setRecipients($recipients , $emailId['id'], $userId);
         return $emailId;
     }
-
-
-    public function setRecipients($recipients, $emailId, $users_id)
+    private function combineRecipients($to, $cc, $bcc)
     {
+        $recipients = array();
+        foreach ($to as $recipient) {
+            $recipients[] = array(
+                'address' => $recipient->getAddress(),
+                'type' => 1
+            );
+        }
+        foreach ($cc as $recipient) {
+            $recipients[] = array(
+                'address' => $recipient->getAddress(),
+                'type' => 2
+            );
+        }
+        foreach ($bcc as $recipient) {
+            $recipients[] = array(
+                'address' => $recipient->getAddress(),
+                'type' => 3
+            );
+        }
+
+        return $recipients;
+    }
+
+    public function setRecipients($recipients, $emailId, $users_id )
+    {
+
         foreach ($recipients as $recipient) {
-            if (!$recipient->getAddress() == null) {
-                $query = "INSERT INTO recipients (emails_id,users_id, `to`) VALUES (:emails_id,:users_id,:to)";
+            if (!$recipient['address'] == null) {
+                $query = "INSERT INTO recipients (emails_id,users_id, recipients_type_id,`to`) VALUES (:emails_id,:users_id,:recipients_type_id,:to)";
                 $stmt = $this->conn->prepare($query);
 
                 $stmt->bindParam(':emails_id', $emailId);
+                $stmt->bindParam(':recipients_type_id', $recipient['type']);
                 $stmt->bindParam(':users_id', $users_id['id']);
-                $address = $recipient->getAddress();
-                $stmt->bindParam(':to', $address);
+                $stmt->bindParam(':to', $recipient['address']);
                 $stmt->execute();
             }
 
         }
 
     }
+
 
     public function getEmailId($uid)
     {
