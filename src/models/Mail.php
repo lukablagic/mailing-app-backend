@@ -56,22 +56,24 @@ class Mail
 
     public function getEmailsByUser($email) {
         $query = "SELECT 
-        emails.id, 
-        emails.in_reply_to, 
-        emails.uid, 
-        emails.subject, 
-        emails.`from`, 
-        emails.body, 
-        emails.sent_date, 
-        emails.is_read, 
-        emails.has_attachment,
-        GROUP_CONCAT(DISTINCT IF(recipients_type.type = 'to', recipients.`to`, NULL)) AS to_recipients,
-        GROUP_CONCAT(DISTINCT IF(recipients_type.type = 'cc', recipients.`to`, NULL)) AS cc_recipients,
-        GROUP_CONCAT(DISTINCT IF(recipients_type.type = 'bcc', recipients.`to`, NULL)) AS bcc_recipients
-    FROM emails
-    LEFT JOIN recipients ON recipients.emails_id = emails.id
-    LEFT JOIN recipients_type ON recipients_type.id = recipients.recipients_type_id
-    JOIN users ON users.id = recipients.users_id
+    emails.id, 
+    emails.subject, 
+    emails.in_reply_to,
+    GROUP_CONCAT(DISTINCT `references`.`reference` SEPARATOR ',') AS `references`,
+    emails.uid, 
+    emails.`from`, 
+    emails.body, 
+    emails.sent_date, 
+    emails.is_read, 
+    emails.has_attachment,
+    GROUP_CONCAT(DISTINCT IF(recipients_type.type = 'to', recipients.`to`, NULL)) AS to_recipients,
+    GROUP_CONCAT(DISTINCT IF(recipients_type.type = 'cc', recipients.`to`, NULL)) AS cc_recipients,
+    GROUP_CONCAT(DISTINCT IF(recipients_type.type = 'bcc', recipients.`to`, NULL)) AS bcc_recipients
+FROM emails
+LEFT JOIN recipients ON recipients.emails_id = emails.id
+LEFT JOIN recipients_type ON recipients_type.id = recipients.recipients_type_id
+JOIN users ON users.id = recipients.users_id
+LEFT JOIN `references` ON `references`.emails_id = emails.id
     WHERE users.email = :email
     GROUP BY emails.id";
 
@@ -103,9 +105,19 @@ class Mail
         $stmt->execute();
         $emailId = $this->getEmailId($email->uid);
         $recipients = $this->combineRecipients($email->to, $email->cc, $email->bcc);
-        var_dump($recipients);
+        $this->setReferences($email->references, $emailId['id']);
         $this->setRecipients($recipients , $emailId['id'], $userId);
         return $emailId;
+    }
+    private function setReferences($references, $emailId)
+    {
+        foreach ($references as $reference) {
+            $query = "INSERT INTO `references` (emails_id,reference) VALUES (:emails_id,:reference)";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':emails_id', $emailId);
+            $stmt->bindParam(':reference', $reference);
+            $stmt->execute();
+        }
     }
     private function combineRecipients($to, $cc, $bcc)
     {

@@ -41,7 +41,8 @@ class EmailFetcher
 
 
         $emailData->in_reply_to = $message->getInReplyTo();
-        // var_dump($emailData->in_reply_to);
+        $emailData->references = $message->getReferences();
+       // var_dump($emailData->in_reply_to);
         if ($emailData->in_reply_to == null) {
             $emailData->in_reply_to = [];
         }
@@ -141,13 +142,12 @@ class EmailFetcher
             $mail->setFrom($email);
             if ($data['to'] != null ) {
                 foreach ($data['to'] as $to) {
-                    var_dump($to);
                     $mail->addAddress($to);
 
                 }
             }
             $mail->addCustomHeader("In-Reply-To", $data['inReplyTo']);
-
+                $mail->addCustomHeader("References", $data['references']);
             if ($data['cc'] != null ) {
                 foreach ($data['cc'] as $cc) {
                     $mail->addCC($cc);

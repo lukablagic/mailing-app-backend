@@ -49,7 +49,9 @@ class AuthController
                 switch ($id) {
                     case "user":
                         http_response_code(200);
-                         echo json_encode($this->auth->getUserData());
+                         echo json_encode([
+                             "message" => "User data fetched",
+                                "user"=> $this->auth->getUserData()]);
                         break;
                     default:
                         http_response_code(405);
