@@ -32,9 +32,11 @@ class MailController
     public $mailGateway;
     private $emailFetcherGateway;
     private $authGateway;
+    private $attachmentGateway;
 
-    public function __construct(Mail $mailGateway, EmailFetcher $emailFetcherGateway, Auth $authGateway)
+    public function __construct(Mail $mailGateway, EmailFetcher $emailFetcherGateway, Auth $authGateway, Attachment $attachmentGateway)
     {
+        $this->attachmentGateway = $attachmentGateway;
         $this->mailGateway = $mailGateway;
         $this->emailFetcherGateway = $emailFetcherGateway;
         $this->authGateway = $authGateway;
@@ -54,7 +56,6 @@ class MailController
     }
 
 
-
     private function processCollectionRequest(string $method): void
     {
         header('Access-Control-Allow-Origin: *');
@@ -72,14 +73,15 @@ class MailController
         switch ($method) {
             case "GET":
                 //fetch all emails from imap server
-                $this->emailFetcherGateway->fetchInbox($user['email'], $user['password']);
-                    $this->emailFetcherGateway->fetchSent($user['email'], $user['password']);
                 $response = $this->mailGateway->getEmailsByUser($user['email']);
+//                $this->emailFetcherGateway->fetchSent($user['email'], $user['password']);
+//                $this->emailFetcherGateway->fetchInbox($user['email'], $user['password']);
 
                 http_response_code(200);
                 echo json_encode(["message" => "Emails fetched",
                     "emails" => $response
                 ]);
+
                 break;
             //3.	POST /emails - Sends an email using SMTP protocol to one or more recipients
             case "POST":
@@ -87,10 +89,10 @@ class MailController
 
                 if (isset($_FILES['fileName'])) {
                     $attachment = $_FILES['fileName'];
-                    $this->emailFetcherGateway->sendEmail($user['email'], $user['password'],$data, $attachment);
+                    $this->emailFetcherGateway->sendEmail($user['email'], $user['password'], $data, $attachment);
                 }
 
-                $this->emailFetcherGateway->sendEmail($user['email'], $user['password'],$data, null);
+                $this->emailFetcherGateway->sendEmail($user['email'], $user['password'], $data, null);
                 http_response_code(201);
                 echo json_encode([
                     "message" => "Message sent",
@@ -112,7 +114,7 @@ class MailController
         header('Access-Control-Allow-Headers: Origin, Content-Type, Accept, Authorization');
 
         $user = $this->authGateway->authenticateCall();
-      //  var_dump($user);
+        //  var_dump($user);
         if (!$user) {
 
             http_response_code(401);
@@ -132,16 +134,44 @@ class MailController
                 echo json_encode([
                     "message" => "Email with id $id status updated to  $responseStatus",
                 ]);
-                break;
+
+
+//                http_response_code(405);
+//                echo json_encode(["error" => "Invalid action parameter"]);
+
 
             case "DELETE":
-
+                $data = json_decode(file_get_contents("php://input"), true);
+                $status = $data["delete"];
+                $this->emailFetcherGateway->deleteEmail($user['email'], $user['password'], $id, $status);
+                $this->mailGateway->delete($id); // unutra se brise i attachment
+                $responseStatus = strval($status);
+                http_response_code(200);
+                echo json_encode([
+                    "message" => "Email with id $id is deleted  $responseStatus",
+                ]);
                 echo json_encode([
                     "message" => "Product $id deleted",
                     //        "rows" => $rows
                 ]);
                 break;
+            case "GET":
 
+                $data = json_decode(file_get_contents("php://input"), true);
+                if($action == "attachments"){
+                    header('Content-Type: application/octet-stream');
+                    header('Content-Disposition: attachment; filename="attachment.pdf"'); // Replace with the actual filename of the attachment
+
+                    $response = $this->attachmentGateway->getAttachemntsByMail($id);
+                    http_response_code(200);
+                    echo json_encode(["message" => "Attachments fetched",
+                        "attachments" => $response
+                    ]);
+                }
+                // Set the appropriate headers to indicate that the response is an attachment
+
+
+                break;
             default:
                 http_response_code(405);
                 header("Allow: GET, PATCH, DELETE");

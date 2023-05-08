@@ -47,7 +47,14 @@ class Attachment
 
         $stmt->execute();
     }
-
+public function getAttachemntsByMail($email_id)
+{
+    $query = "SELECT * FROM attachments WHERE emails_id = :email_id";
+    $stmt = $this->conn->prepare($query);
+    $stmt->bindParam(':email_id', $email_id);
+    $stmt->execute();
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
 
 
 

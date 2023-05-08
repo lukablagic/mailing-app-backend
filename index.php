@@ -51,7 +51,7 @@
 
     switch ($endpoint) {
         case 'emails':
-            $mailController = new MailController($mailGateway, $emailFetcherGateway,$authGateway);
+            $mailController = new MailController($mailGateway, $emailFetcherGateway,$authGateway,$attachmentGateway);
             $mailController->processRequest($_SERVER["REQUEST_METHOD"], $id,$action);
              break;
         case 'auth':

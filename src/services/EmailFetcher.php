@@ -8,14 +8,6 @@ require_once __DIR__ . '/../../vendor/autoload.php';
 use Ddeboer\Imap\Server;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
-use Ddeboer\Imap\SearchExpression;
-use Ddeboer\Imap\Search\Email\To;
-use Ddeboer\Imap\Search\Text\Body;
-use Ddeboer\Imap\Connection;
-use Ddeboer\Imap\Message\EmailAddress;
-use Ddeboer\Imap\Message\Attachment;
-use \Ddeboer\Imap\Search\Flag\Unseen;
-use \Ddeboer\imap\MailboxInterface;
 
 class EmailFetcher
 {
@@ -79,7 +71,8 @@ class EmailFetcher
             $attachmentData->file_name = $attachment->getFileName();
             $attachmentData->file_path = ''; // TODO: Set the file path
             $attachmentData->file_type = $attachment->getType();
-            $attachmentData->data = $attachment->getContent();
+            $attachmentData->data = $attachment->getDecodedContent();
+
 
             $this->attachmentGateway->insert($attachmentData, $emailId['id']);
         }
@@ -196,7 +189,9 @@ class EmailFetcher
             echo json_encode('Mailer Error: ' . $mail->ErrorInfo);
         }
     }
+function deleteEmail($email, $password, $id){
 
+}
     function updateEmailStatus($email, $password, $id, $status)
     {
 
