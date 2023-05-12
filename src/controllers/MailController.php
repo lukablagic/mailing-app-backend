@@ -124,21 +124,23 @@ class MailController
         switch ($method) {
 
             case "PUT":
+                if ($action == "status"){
                 $data = json_decode(file_get_contents("php://input"), true);
                 $status = $data["status"];
                 $this->emailFetcherGateway->updateEmailStatus($user['email'], $user['password'], $id, $status);
                 var_dump($status);
                 $this->mailGateway->updateStatus($id, $status);
-                $responseStatus = strval($status);
+                $responseStatus = $status;
                 http_response_code(200);
                 echo json_encode([
                     "message" => "Email with id $id status updated to  $responseStatus",
                 ]);
-
-
-//                http_response_code(405);
-//                echo json_encode(["error" => "Invalid action parameter"]);
-
+                }
+                else{
+                    http_response_code(405);
+                    echo json_encode(["error" => "Invalid action parameter"]);
+                }
+            break;
 
             case "DELETE":
                 $data = json_decode(file_get_contents("php://input"), true);
