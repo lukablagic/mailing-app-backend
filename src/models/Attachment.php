@@ -47,15 +47,32 @@ class Attachment
 
         $stmt->execute();
     }
-public function getAttachemntsByMail($email_id)
-{
-    $query = "SELECT * FROM attachments WHERE emails_id = :email_id";
-    $stmt = $this->conn->prepare($query);
-    $stmt->bindParam(':email_id', $email_id);
-    $stmt->execute();
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
-}
+    public function getAttachemntsByMail($emails_id)
+    {
+        $query = "SELECT id, file_name, file_path, file_type, emails_id FROM attachments WHERE emails_id = :emails_id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':emails_id', $emails_id);
+        $stmt->execute();
+        $attachments = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+
+
+        return $attachments;
+    }
+    public function getAttachmentData($file_name)
+    {
+        $query = "SELECT data FROM attachments WHERE file_name = :file_name";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':file_name', $file_name);
+        $stmt->execute();
+        $attachment = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($attachment) {
+            return $attachment['data'] ;
+        }
+
+        return null;
+    }
 
 
 

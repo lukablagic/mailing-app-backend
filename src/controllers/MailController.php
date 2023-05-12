@@ -74,8 +74,8 @@ class MailController
             case "GET":
                 //fetch all emails from imap server
                 $response = $this->mailGateway->getEmailsByUser($user['email']);
-//                $this->emailFetcherGateway->fetchSent($user['email'], $user['password']);
-//                $this->emailFetcherGateway->fetchInbox($user['email'], $user['password']);
+                $this->emailFetcherGateway->fetchSent($user['email'], $user['password']);
+                $this->emailFetcherGateway->fetchInbox($user['email'], $user['password']);
 
                 http_response_code(200);
                 echo json_encode(["message" => "Emails fetched",
@@ -157,18 +157,23 @@ class MailController
                 break;
             case "GET":
 
-                $data = json_decode(file_get_contents("php://input"), true);
                 if($action == "attachments"){
-                    header('Content-Type: application/octet-stream');
-                    header('Content-Disposition: attachment; filename="attachment.pdf"'); // Replace with the actual filename of the attachment
-
-                    $response = $this->attachmentGateway->getAttachemntsByMail($id);
+                    // Set the appropriate headers
+                    header('Content-Type: application/json');
+                     $response = $this->attachmentGateway->getAttachemntsByMail($id);
                     http_response_code(200);
                     echo json_encode(["message" => "Attachments fetched",
                         "attachments" => $response
                     ]);
                 }
-                // Set the appropriate headers to indicate that the response is an attachment
+                if ($action == "data") {
+                    header('Content-Type: application/pdf');
+                    $response = $this->attachmentGateway->getAttachmentData($id);
+                    echo $response;
+                }
+
+
+
 
 
                 break;
