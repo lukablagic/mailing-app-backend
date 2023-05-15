@@ -71,8 +71,13 @@ class EmailFetcher
             $attachmentData->file_name = $attachment->getFileName();
             $attachmentData->file_path = ''; // TODO: Set the file path
             $attachmentData->file_type = $attachment->getType();
+            $attachmentData->file_subtype = $attachment->getSubtype();
+            $attachmentData->encoding = $attachment->getEncoding();
+            $attachmentData->content = $attachment->getContent();
+            $attachmentData->charset = $attachment->getCharset();
             $attachmentData->data = $attachment->getDecodedContent();
-
+            $attachmentData->file_path = 'images/' . $attachment->getFileName();
+          //  $attachmentData->created_at = $attachment->getEmbeddedMessage();
 
             $this->attachmentGateway->insert($attachmentData, $emailId['id']);
         }

@@ -47,7 +47,7 @@ class User
         return false;
     }
     public function getUserData($token){
-        $stmt = $this->conn->prepare("SELECT id, name, surname,email,profile_picture FROM users WHERE token = :token");
+        $stmt = $this->conn->prepare("SELECT  name, surname,email,profile_picture FROM users WHERE token = :token");
         $stmt->bindParam(':token', $token);
         $stmt->execute();
         $user = $stmt->fetch(PDO::FETCH_ASSOC);

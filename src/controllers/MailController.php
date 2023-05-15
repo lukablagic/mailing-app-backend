@@ -124,23 +124,22 @@ class MailController
         switch ($method) {
 
             case "PUT":
-                if ($action == "status"){
-                $data = json_decode(file_get_contents("php://input"), true);
-                $status = $data["status"];
-                $this->emailFetcherGateway->updateEmailStatus($user['email'], $user['password'], $id, $status);
-                var_dump($status);
-                $this->mailGateway->updateStatus($id, $status);
-                $responseStatus = $status;
-                http_response_code(200);
-                echo json_encode([
-                    "message" => "Email with id $id status updated to  $responseStatus",
-                ]);
-                }
-                else{
+                if ($action == "status") {
+                    $data = json_decode(file_get_contents("php://input"), true);
+                    $status = $data["status"];
+                    $this->emailFetcherGateway->updateEmailStatus($user['email'], $user['password'], $id, $status);
+
+                    $this->mailGateway->updateStatus($id, $status);
+                    $responseStatus = $status;
+                    http_response_code(200);
+                    echo json_encode([
+                        "message" => "Email with id $id status updated to  $responseStatus",
+                    ]);
+                } else {
                     http_response_code(405);
                     echo json_encode(["error" => "Invalid action parameter"]);
                 }
-            break;
+                break;
 
             case "DELETE":
                 $data = json_decode(file_get_contents("php://input"), true);
@@ -159,23 +158,32 @@ class MailController
                 break;
             case "GET":
 
-                if($action == "attachments"){
+                if ($action == "attachments") {
                     // Set the appropriate headers
                     header('Content-Type: application/json');
-                     $response = $this->attachmentGateway->getAttachemntsByMail($id);
+                    $response = $this->attachmentGateway->getAttachemntsByMail($id);
                     http_response_code(200);
                     echo json_encode(["message" => "Attachments fetched",
                         "attachments" => $response
                     ]);
                 }
                 if ($action == "data") {
-                    header('Content-Type: application/pdf');
-                    $response = $this->attachmentGateway->getAttachmentData($id);
-                    echo $response;
+                    // Set the appropriate headers
+                    $attachment = $this->attachmentGateway->getAttachmentById($id);
+                    header('Content-Type: ' . $attachment['file_type'] . '/' . $attachment['file_subtype'] );
+                 //   header('Content-Disposition: attachment; filename="' . $attachment['file_name'] . '"');
+                    if ($attachment['file_type'] == 'image') {
+                        header('Content-Type: application/json');
+                        $response = $this->attachmentGateway->returnImage($id);
+                        //remove bachslash from base64
+
+                        echo json_encode(["data" => '<img  src="data:image/jpeg;base64,'.$response . '" />'])   ;
+                    } else {
+                        $response = $this->attachmentGateway->getAttachmentData($id);
+                        echo $response;
+
+                    }
                 }
-
-
-
 
 
                 break;

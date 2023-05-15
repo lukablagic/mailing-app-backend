@@ -1,5 +1,4 @@
 <?php
-require_once __DIR__ . '/../../src/services/UpdateEmail.php';
 
 class Auth
 {
@@ -82,14 +81,11 @@ class Auth
     {
         $headers = apache_request_headers();
         $token = $_SERVER['HTTP_AUTHORIZATION'] ?? null;
-
         $token = str_replace('Bearer ', '', $token);
-        //  echo json_encode($token);
         return $this->userGateway->getUserByToken($token);
     }
     public function getUserData()
     {
-
         $token = $_SERVER['HTTP_AUTHORIZATION'] ?? null;
         $token = str_replace('Bearer ', '', $token);
         $user =  $this->userGateway->getUserData($token);

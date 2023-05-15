@@ -45,7 +45,7 @@ class AuthController
 
                 break;
             case "GET":
-                $user = $this->auth->authenticateCall();
+
                 switch ($id) {
                     case "user":
                         http_response_code(200);

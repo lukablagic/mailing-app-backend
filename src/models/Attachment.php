@@ -24,24 +24,37 @@ class Attachment
     }
     public function insert( $attachment, $email_id)
    {
+//       $attachmentData->encoding = $attachment->getEncoding();
+//       $attachmentData->content = $attachment->getContent();
+
 //        $attachmentData->email_id = $emailId;
 //        $attachmentData->file_name = $attachment->getFileName();
 //        $attachmentData->file_path = ''; // TODO: Set the file path
 //        $attachmentData->file_type = $attachment->getType();
 //        $attachmentData->data = $attachment->getContent();
         //{"name":"CV Luka.pdf","full_path":"CV Luka.pdf","type":"application\/pdf","tmp_name":"C:\\xampp\\tmp\\php9CB.tmp","error":0,"size":161268}
-        $query = "insert into attachments (file_name, file_path, file_type, data, emails_id) VALUES (:name, :path, :type, :data, :emails_id)";
+        $query = "insert into attachments (file_name, file_path, file_type,file_subtype,encoding,charset,content, data, emails_id) VALUES (:name, :path, :type,:file_subtype,:encoding,:content,:charset, :data, :emails_id)";
         $stmt = $this->conn->prepare($query);
 
         $name = $attachment->file_name;
         $path = $attachment->file_path;
         $type = $attachment->file_type;
+        $file_subtype = $attachment->file_subtype;
+        $encoding = $attachment->encoding;
+
+        $content = $attachment->content;
+        $charset = $attachment->charset;
 
         $data = $attachment->data;
         $stmt->bindParam(':name', $name);
         $stmt->bindParam(':path', $path);
         $stmt->bindParam(':type', $type);
         $stmt->bindParam(':data', $data);
+        $stmt->bindParam(':file_subtype', $file_subtype);
+        $stmt->bindParam(':encoding', $encoding);
+        $stmt->bindParam(':content', $content);
+        $stmt->bindParam(':charset', $charset);
+
 
         $stmt->bindParam(':emails_id', $email_id);
 
@@ -49,7 +62,7 @@ class Attachment
     }
     public function getAttachemntsByMail($emails_id)
     {
-        $query = "SELECT id, file_name, file_path, file_type, emails_id FROM attachments WHERE emails_id = :emails_id";
+        $query = "SELECT id, file_name, file_path, file_type, file_subtype, emails_id FROM attachments WHERE emails_id = :emails_id";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':emails_id', $emails_id);
         $stmt->execute();
@@ -59,6 +72,17 @@ class Attachment
 
         return $attachments;
     }
+    public function getAttachmentById($file_name){
+        $query = "SELECT id, file_name, file_path, file_type,file_subtype, emails_id FROM attachments WHERE file_name = :file_name";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':file_name', $file_name);
+        $stmt->execute();
+        $attachment = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($attachment){
+            return $attachment;
+        }
+        return false;
+}
     public function getAttachmentData($file_name)
     {
         $query = "SELECT data FROM attachments WHERE file_name = :file_name";
@@ -68,12 +92,29 @@ class Attachment
         $attachment = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($attachment) {
-            return $attachment['data'] ;
+            return $attachment['data'];
         }
 
-        return null;
+        return false;
     }
+    public function returnImage($file_name)
+    {
+      return  base64_encode($this->getAttachmentData($file_name));
 
+    }
+    public function getAttachmentContent($file_name)
+    {
+        $query = "SELECT content FROM attachments WHERE file_name = :file_name";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':file_name', $file_name);
+        $stmt->execute();
+        $attachment = $stmt->fetch(PDO::FETCH_ASSOC);
 
+        if ($attachment) {
+            return $attachment['content'];
+        }
+
+        return false;
+    }
 
 }
