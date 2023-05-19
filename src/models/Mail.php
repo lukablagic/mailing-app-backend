@@ -105,6 +105,7 @@ LEFT JOIN `references` ON `references`.emails_id = emails.id
         $stmt->execute();
         $emailId = $this->getEmailId($email->uid);
         $recipients = $this->combineRecipients($email->to, $email->cc, $email->bcc);
+
         $this->setReferences($email->references, $emailId['id']);
         $this->setRecipients($recipients , $emailId['id'], $userId);
         return $emailId;
@@ -207,12 +208,34 @@ LEFT JOIN `references` ON `references`.emails_id = emails.id
 
     public function delete($uid)
     {
-        $query = "DELETE FROM emails WHERE uid = :uid";
+        $query = "
+        SET @email_id = (
+            SELECT id FROM emails WHERE uid = :uid LIMIT 1
+        );
+
+        -- Delete recipients of the email
+        DELETE FROM recipients WHERE emails_id = @email_id;
+
+        -- Delete attachments of the email
+        DELETE FROM attachments WHERE emails_id = @email_id;
+
+        -- Delete references of the email
+        DELETE FROM `references` WHERE emails_id = @email_id;
+
+        -- Delete the email itself
+        DELETE FROM emails WHERE id = @email_id;
+
+        SELECT * FROM `emails` WHERE uid = :uid;
+    ";
+
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':uid', $uid);
         $stmt->execute();
-        return $uid;
+
+        $response = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $response;
     }
+
 
     public function query($query)
     {

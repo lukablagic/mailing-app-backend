@@ -34,7 +34,7 @@ class EmailFetcher
 
         $emailData->in_reply_to = $message->getInReplyTo();
         $emailData->references = $message->getReferences();
-       // var_dump($emailData->in_reply_to);
+        // var_dump($emailData->in_reply_to);
         if ($emailData->in_reply_to == null) {
             $emailData->in_reply_to = [];
         }
@@ -43,7 +43,7 @@ class EmailFetcher
         $emailData->to = $message->getTo();
         $emailData->cc = $message->getCc();
         $emailData->bcc = $message->getBcc();
-        //     var_dump($emailData->cc);
+
 
         $emailData->body = $message->getBodyHtml();
 
@@ -76,8 +76,6 @@ class EmailFetcher
             $attachmentData->content = $attachment->getContent();
             $attachmentData->charset = $attachment->getCharset();
             $attachmentData->data = $attachment->getDecodedContent();
-            $attachmentData->file_path = 'images/' . $attachment->getFileName();
-          //  $attachmentData->created_at = $attachment->getEmbeddedMessage();
 
             $this->attachmentGateway->insert($attachmentData, $emailId['id']);
         }
@@ -110,14 +108,14 @@ class EmailFetcher
         $server = new Server('imap.gmail.com');
 
         $connection = $server->authenticate($email, $password);
-        $mailbox = $connection->getMailbox('[Gmail]/Sent Mail');
+            $mailbox = $connection->getMailbox('[Gmail]/Sent Mail');
         $messages = $mailbox->getMessages();
 
         foreach ($messages as $message) {
 
-          //   if ($this->mailGateway->checkMailExists($message->getId())) {
+            //   if ($this->mailGateway->checkMailExists($message->getId())) {
             $this->saveEmail($message, $email, $password);
-           // }
+            // }
         }
     }
 
@@ -138,25 +136,29 @@ class EmailFetcher
         //Recipients
         try {
             $mail->setFrom($email);
-            if ($data['to'] != null ) {
+            if ($data['to'] != null && is_array($data['to'])) {
                 foreach ($data['to'] as $to) {
-                    $mail->addAddress($to);
-
+                    if ($to != null) {
+                        $mail->addAddress($to);
+                    }
                 }
             }
-            $mail->addCustomHeader("In-Reply-To", $data['inReplyTo']);
-                $mail->addCustomHeader("References", $data['references']);
-            if ($data['cc'] != null ) {
+            if (isset($data['in_reply_to']) && is_array($data['in_reply_to'])) {
+                $mail->addCustomHeader("In-Reply-To", $data['in_reply_to']);
+            }
+            if ($data['cc'] != null && is_array($data['cc'])) {
                 foreach ($data['cc'] as $cc) {
-                    $mail->addCC($cc);
-
+                    if ($cc != null) {
+                        $mail->addCC($cc);
+                    }
                 }
             }
 
-            if ($data['bcc'] != null ) {
+            if ($data['bcc'] != null && is_array($data['bcc'])) {
                 foreach ($data['bcc'] as $bcc) {
-
-                    $mail->addBCC($bcc);
+                    if ($bcc != null) {
+                        $mail->addBCC($bcc);
+                    }
                 }
             }
         } catch (Exception $e) {
@@ -169,8 +171,6 @@ class EmailFetcher
         $mail->Subject = $data['subject'];
         $mail->Body = $data['body'];
 
-        //save attachments to the database
-        $filePath = 'C:\xampp\tmp';
         //  echo json_encode($attachments);
         if ($attachments != null) {
 
@@ -188,15 +188,35 @@ class EmailFetcher
                 echo 'Message has been sent';
             }
 
-
         } catch (Exception $e) {
             echo json_encode('Message could not be sent.');
             echo json_encode('Mailer Error: ' . $mail->ErrorInfo);
         }
     }
-function deleteEmail($email, $password, $id){
 
-}
+    function deleteEmail($email, $password, $uid)
+    {
+
+        $exists = $this->mailGateway->getEmailId($uid);
+        if (!$exists) {
+            return json_encode(['status' => 'Invalid email uid!']);
+        }
+
+        $server = new Server('imap.gmail.com');
+        $connection = $server->authenticate($email, $password);
+
+        $mailbox = $connection->getMailbox('[Gmail]/Sent Mail');
+        $messages = $mailbox->getMessages();
+
+        foreach ($messages as $message) {
+           if ($message->getId() == $uid) {
+                   $message->delete();
+                return json_encode(['status' => 'Email deleted!']);
+            }
+        }
+        return true;
+    }
+
     function updateEmailStatus($email, $password, $id, $status)
     {
 

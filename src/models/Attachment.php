@@ -24,16 +24,7 @@ class Attachment
     }
     public function insert( $attachment, $email_id)
    {
-//       $attachmentData->encoding = $attachment->getEncoding();
-//       $attachmentData->content = $attachment->getContent();
-
-//        $attachmentData->email_id = $emailId;
-//        $attachmentData->file_name = $attachment->getFileName();
-//        $attachmentData->file_path = ''; // TODO: Set the file path
-//        $attachmentData->file_type = $attachment->getType();
-//        $attachmentData->data = $attachment->getContent();
-        //{"name":"CV Luka.pdf","full_path":"CV Luka.pdf","type":"application\/pdf","tmp_name":"C:\\xampp\\tmp\\php9CB.tmp","error":0,"size":161268}
-        $query = "insert into attachments (file_name, file_path, file_type,file_subtype,encoding,charset,content, data, emails_id) VALUES (:name, :path, :type,:file_subtype,:encoding,:content,:charset, :data, :emails_id)";
+       $query = "insert into attachments (file_name, file_path, file_type,file_subtype,encoding,charset,content, data, emails_id) VALUES (:name, :path, :type,:file_subtype,:encoding,:content,:charset, :data, :emails_id)";
         $stmt = $this->conn->prepare($query);
 
         $name = $attachment->file_name;

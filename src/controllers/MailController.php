@@ -87,8 +87,8 @@ class MailController
             case "POST":
                 $data = json_decode(file_get_contents("php://input"), true);
 
-                if (isset($_FILES['fileName'])) {
-                    $attachment = $_FILES['fileName'];
+                if (isset($_FILES['file'])) {
+                    $attachment = $_FILES['file'];
                     $this->emailFetcherGateway->sendEmail($user['email'], $user['password'], $data, $attachment);
                 }
 
@@ -96,7 +96,7 @@ class MailController
                 http_response_code(201);
                 echo json_encode([
                     "message" => "Message sent",
-                    //       "id" => $id
+                    // "id" => $data
                 ]);
                 break;
 
@@ -143,18 +143,16 @@ class MailController
 
             case "DELETE":
                 $data = json_decode(file_get_contents("php://input"), true);
-                $status = $data["delete"];
-                $this->emailFetcherGateway->deleteEmail($user['email'], $user['password'], $id, $status);
-                $this->mailGateway->delete($id); // unutra se brise i attachment
-                $responseStatus = strval($status);
-                http_response_code(200);
-                echo json_encode([
-                    "message" => "Email with id $id is deleted  $responseStatus",
-                ]);
-                echo json_encode([
-                    "message" => "Product $id deleted",
-                    //        "rows" => $rows
-                ]);
+                //  var_dump($data['uid']);
+                if ($id == "delete") {
+                    $imapRemove = $this->emailFetcherGateway->deleteEmail($user['email'], $user['password'], $data['uid']);
+                   $database = $this->mailGateway->delete($id); // delete from database
+                        http_response_code(200);
+                        echo json_encode([
+                            "message" => "Email " . $data['uid'] . " deleted",
+                        ]);
+
+                }
                 break;
             case "GET":
 
@@ -170,14 +168,11 @@ class MailController
                 if ($action == "data") {
                     // Set the appropriate headers
                     $attachment = $this->attachmentGateway->getAttachmentById($id);
-                    header('Content-Type: ' . $attachment['file_type'] . '/' . $attachment['file_subtype'] );
-                 //   header('Content-Disposition: attachment; filename="' . $attachment['file_name'] . '"');
+                    header('Content-Type: ' . $attachment['file_type'] . '/' . $attachment['file_subtype']);
                     if ($attachment['file_type'] == 'image') {
                         header('Content-Type: application/json');
                         $response = $this->attachmentGateway->returnImage($id);
-                        //remove bachslash from base64
-
-                        echo json_encode(["data" => '<img  src="data:image/jpeg;base64,'.$response . '" />'])   ;
+                        echo json_encode(["data" => '<img  src="data:' . $attachment['file_type'] . '/' . $attachment['file_subtype'] . ';base64,' . $response . '" />']);
                     } else {
                         $response = $this->attachmentGateway->getAttachmentData($id);
                         echo $response;
