@@ -12,8 +12,8 @@ class Database
     {
         $this->host = '127.0.0.1:3310';
         $this->db_name = 'mailingdb';
-        $this->password = "";
-        $this->username = 'root';
+        $this->password = "/pXdAmAwbnxIYS9t";
+        $this->username = 'mailing_app_normal';
     }
 
     public function connect()
