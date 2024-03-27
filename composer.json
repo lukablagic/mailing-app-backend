@@ -1,7 +1,10 @@
 {
     "autoload": {
         "psr-4": {
-            "Database\\": "src/"
+            "Controller\\": "src/controllers/",
+            "Config\\": "src/config/",
+            "Utility\\": "src/utility/",
+            "Model\\": "src/models/"
         }
     }
 }
