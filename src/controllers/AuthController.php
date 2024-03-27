@@ -32,9 +32,7 @@ class AuthController
     }
     public function deleteResource($id)
     {
-
     }
-
 
 }
 

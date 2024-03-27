@@ -3,7 +3,7 @@
 require __DIR__ . '../vendor/autoload.php';
 
 use Utility\RequestHandler;
-use Utility\Router;
+use Router\Router;
 
 error_reporting(E_ALL);
 

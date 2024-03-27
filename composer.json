@@ -1,6 +1,7 @@
 {
     "autoload": {
         "psr-4": {
+            "Router\\": "src/routers/",
             "Controller\\": "src/controllers/",
             "Config\\": "src/config/",
             "Utility\\": "src/utility/",
