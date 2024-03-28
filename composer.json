@@ -5,7 +5,11 @@
             "Controller\\": "src/controllers/",
             "Config\\": "src/config/",
             "Utility\\": "src/utility/",
-            "Model\\": "src/models/"
+            "Model\\": "src/models/",
+            "Service\\": "src/services/"
         }
+    },
+    "require": {
+        "phpmailer/phpmailer": "^6.9"
     }
 }
