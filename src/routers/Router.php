@@ -11,7 +11,8 @@ class Router
     public static function init($endpoint, $method)
     {
         $endpoints = explode('/', $_SERVER['REQUEST_URI']);
-        if ($endpoint !== $endpoints[2]) {
+        $access = explode('/', $endpoint);
+        if ($access[0] !== $endpoints[2]) {
             RequestHandler::invalidEndpoint();
         }
         if ($_SERVER['REQUEST_METHOD'] != $method) {
@@ -25,7 +26,7 @@ class Router
     }
     public static function getCollection($endpoint, $controllerName, $isProtected)
     {
-        self::init($endpoint,'GET');
+        self::init($endpoint, 'GET');
         $conn = self::createConnection();
         $controller = new $controllerName($conn);
         $controller->getCollection();
@@ -37,11 +38,17 @@ class Router
 
     public static function postCollection($endpoint, $controllerName, $isProtected)
     {
-
+        self::init($endpoint, 'POST');
+        $conn = self::createConnection();
+        $controller = new $controllerName($conn);
+        $controller->postCollection();
     }
     public static function postResource($endpoint, $controllerName, $isProtected)
     {
-
+        self::init($endpoint, 'POST');
+        $conn = self::createConnection();
+        $controller = new $controllerName($conn);
+        $controller->postResource();
     }
     public static function putCollection($endpoint, $controllerName, $isProtected)
     {

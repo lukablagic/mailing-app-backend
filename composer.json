@@ -6,7 +6,8 @@
             "Config\\": "src/config/",
             "Utility\\": "src/utility/",
             "Model\\": "src/models/",
-            "Service\\": "src/services/"
+            "Service\\": "src/services/",
+            "Validator\\": "src/validators/"
         }
     },
     "require": {

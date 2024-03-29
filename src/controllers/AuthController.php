@@ -4,38 +4,45 @@ namespace Controller;
 
 use PDO;
 use Utility\RequestHandler;
-use User;
+use Service\AuthService;
+use Model\User;
 
 class AuthController
 {
-    private $conn;
-    private $user;
+    private $authService;
 
 
 
     public function __construct(PDO $conn)
     {
-        $this->conn = $conn;
-        $this->uesr = new User($conn);
+        $this->authService = new AuthService($conn);
     }
 
-    public function getCollection()
+    public function getCollection($id, $action)
+    {
+        RequestHandler::invalidEndpoint();
+    }
+    public function getResource($id, $action, $queryParams)
+    {
+   
+    }
+    public function postCollection($id, $action, $queryParams)
     {
 
     }
-    public function getResource($id)
+    public function postResource($id,  $queryParams)
+    {
+        die('wrong endpoint');
+        if($id === 'register') {
+            $this->authService->login();
+        }
+        RequestHandler::invalidEndpoint();
+    }
+    public function putResource($id, $action, $queryParams)
     {
 
     }
-    public function postCollection()
-    {
-
-    }
-    public function putResource($id)
-    {
-
-    }
-    public function deleteResource($id)
+    public function deleteResource($id, $action, $queryParams)
     {
     }
 

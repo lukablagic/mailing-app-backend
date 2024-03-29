@@ -6,7 +6,7 @@ class RequestHandler
 {
 
 
-    public static function getRequestBody()
+    public static function getPayload()
     {
         return json_decode(file_get_contents("php://input"), true);
     }
@@ -31,16 +31,33 @@ class RequestHandler
         echo json_encode($response);
         die();
     }
-    // enable cors 
     public static function enableCORS()
     {
-        header("Access-Control-Allow-Origin: *");
-        header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
-        header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
+         if (isset($_SERVER['HTTP_ORIGIN'])) {
+            header("Access-Control-Allow-Origin: {$_SERVER['HTTP_ORIGIN']}");
+            header('Access-Control-Allow-Credentials: true');
+            header('Access-Control-Max-Age: 86400');
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+            if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD'])) {
+                header("Access-Control-Allow-Methods: GET, POST, UPDATE, PUT, PATCH, DELETE");
+            }
+
+            if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS'])) {
+                header("Access-Control-Allow-Headers: {$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']}");
+            }
+
+            exit(0);
+        }
     }
     // check route
     public static function invalidEndpoint()
     {
         self::sendResponseArray(404, ['error' => 'Invalid endpoint!']);
+    }
+    public static function unprocessableEntity($item)
+    {
+        // self::sendResponseArray(422, ['error' => 'Unprocessable Entity', 'message' => $item . ' is required!']);
     }
 }
