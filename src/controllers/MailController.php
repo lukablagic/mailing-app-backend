@@ -34,12 +34,9 @@ class MailController
     private $authGateway;
     private $attachmentGateway;
 
-    public function __construct(Mail $mailGateway, EmailFetcher $emailFetcherGateway, Auth $authGateway, Attachment $attachmentGateway)
+    public function __construct($con,)
     {
-        $this->attachmentGateway = $attachmentGateway;
-        $this->mailGateway = $mailGateway;
-        $this->emailFetcherGateway = $emailFetcherGateway;
-        $this->authGateway = $authGateway;
+
     }
 
     public function processRequest(string $method, ?string $id, ?string $action): void

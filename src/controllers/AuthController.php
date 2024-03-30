@@ -1,32 +1,20 @@
 <?php
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-header('Access-Control-Allow-Headers: Origin, Content-Type, Accept, Authorization');
-//9.	PUT /settings/display-images - Updates the user's preference for displaying images in emails
-//10.	POST /auth- Authenticates a user and generates a session token
-//11.	POST /auth - Destroys the user's session token
+
 
 class AuthController
 {
+    private $conn;
 
-    private $auth;
-    private $userGateway;
 
-    public function __construct(Auth $auth)
+    public function __construct(PDO $conn)
     {
-        $this->auth = $auth;
-
+        $this->conn = $conn;
     }
 
-    public function processRequest(string $method, ?string $id)
+    public function processRequest(string $method, ?string $id, $user)
     {
-        header('Access-Control-Allow-Origin: *');
-        header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-        header('Access-Control-Allow-Headers: Origin, Content-Type, Accept, Authorization');
         switch ($method) {
             case "POST":
-
-
                 switch ($id) {
                     case "login":
                         $this->login();
@@ -48,10 +36,7 @@ class AuthController
 
                 switch ($id) {
                     case "user":
-                        http_response_code(200);
-                         echo json_encode([
-                             "message" => "User data fetched",
-                                "user"=> $this->auth->getUserData()]);
+
                         break;
                     default:
                         http_response_code(405);
