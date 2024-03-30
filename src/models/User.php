@@ -1,15 +1,18 @@
 <?php
 
-//db config
+namespace Model;
+
+use PDO;
+
 class User
 {
 
     private $conn;
 
 
-    public function __construct(Database $db)
+    public function __construct(PDO $conn)
     {
-        $this->conn = $db->connect();
+        $this->conn = $conn;
     }
 
     public function insert($name, $surname, $email, $password, $token)
@@ -46,7 +49,8 @@ class User
         }
         return false;
     }
-    public function getUserData($token){
+    public function getUserData($token)
+    {
         $stmt = $this->conn->prepare("SELECT  name, surname,email,profile_picture FROM users WHERE token = :token");
         $stmt->bindParam(':token', $token);
         $stmt->execute();
@@ -56,7 +60,8 @@ class User
         }
         return false;
     }
-    public function getUserId($email,$password){
+    public function getUserId($email, $password)
+    {
         $stmt = $this->conn->prepare("SELECT id FROM users WHERE email = :email AND password = :password");
         $stmt->bindParam(':email', $email);
         $stmt->bindParam(':password', $password);
@@ -74,22 +79,6 @@ class User
         $stmt->execute();
         $users = $stmt->fetch(PDO::FETCH_ASSOC);
         return $users;
-    }
-
-    public function getAllUsersWithToken()
-    {
-        try {
-            $query = "SELECT * FROM users WHERE token IS NOT NULL";
-            $stmt = $this->conn->prepare($query);
-            //     $stmt = $this->conn->prepare("SELECT * FROM users WHERE token IS NOT NULL");
-            $stmt->execute();
-            $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            return $users;
-        } catch (PDOException $e) {
-            // handle the exception here
-            echo "Error: " . $e->getMessage();
-            return false;
-        }
     }
 
     public function userExisits(string $email, string $password)

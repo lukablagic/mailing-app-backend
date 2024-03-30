@@ -1,5 +1,6 @@
 <?php
 
+<<<<<<< HEAD
 
 class AuthController
 {
@@ -46,71 +47,53 @@ class AuthController
             default:
                 http_response_code(405);
                 header("Allow: POST,GET");
+=======
+namespace Controller;
 
-        }
+use PDO;
+use Utility\RequestHandler;
+use Service\AuthService;
+use Model\User;
+
+class AuthController
+{
+    private $authService;
+
+
+
+    public function __construct(PDO $conn)
+    {
+        $this->authService = new AuthService($conn);
     }
 
-    public function login()
+    public function getCollection($id, $action)
+    {
+        RequestHandler::invalidEndpoint();
+    }
+    public function getResource($id, $action, $queryParams)
+    {
+   
+    }
+    public function postCollection($id, $action, $queryParams)
+    {
+>>>>>>> 0baf2b003ea3b1515210b02d5d448faaa0ffe32e
+
+    }
+    public function postResource($id,  $queryParams)
+    {
+        die('wrong endpoint');
+        if($id === 'register') {
+            $this->authService->login();
+        }
+        RequestHandler::invalidEndpoint();
+    }
+    public function putResource($id, $action, $queryParams)
     {
 
-        $data = json_decode(file_get_contents("php://input"), true);
-        $email = $data["email"];
-        $password = $data["password"];
-        if ($this->auth->login($email, $password)) {
-            $token = $this->auth->generateToken($email);
-            http_response_code(200);
-            echo json_encode([
-                "message" => "Authentication successful",
-                "token" => $token
-            ]);
-        } else {
-            http_response_code(401);
-            echo json_encode([
-                "message" => "Authentication failed"
-            ]);
-        }
     }
-
-    public function logout()
+    public function deleteResource($id, $action, $queryParams)
     {
-        $data = json_decode(file_get_contents("php://input"), true);
-        $token = $data["token"];
-        if ($this->auth->logout($token)) {
-            http_response_code(200);
-            echo json_encode([
-                "message" => "Logout successful"
-            ]);
-        } else {
-            http_response_code(401);
-            echo json_encode([
-                "message" => "Logout failed"
-            ]);
-        }
     }
-
-    public function register()
-    {
-        $data = json_decode(file_get_contents("php://input"), true);
-
-        $name = $data["name"];
-        $surname = $data["surname"];
-        $email = $data["email"];
-        $password = $data["password"];
-        //$profile_picture = $data["profile_picture"];
-
-        if ($this->auth->register($name, $surname, $email, $password)) {
-            http_response_code(200);
-            echo json_encode([
-                "message" => "Registration successful"
-            ]);
-        } else {
-            http_response_code(400);
-            echo json_encode([
-                "message" => "Registration failed or user already exists!"
-            ]);
-        }
-    }
-
 
 }
 
