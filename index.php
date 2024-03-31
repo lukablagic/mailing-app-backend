@@ -9,13 +9,9 @@ error_reporting(E_ALL);
 
 
 RequestHandler::enableCORS();
+
 Router::postResource('auth/login', "Controller\AuthController", false);
 Router::getCollection('mail', "Controller\MailController", true);
-
-
-
-// Router::handle($conn,'/', "MailController",'GET',true);
-
 
 RequestHandler::invalidEndpoint();
 

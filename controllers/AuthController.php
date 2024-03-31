@@ -18,31 +18,30 @@ class AuthController
         $this->authService = new AuthService($conn);
     }
 
-    public function getCollection($id, $action)
+    public function getCollection($id, $action, $queryParams, $userData)
     {
         RequestHandler::invalidEndpoint();
     }
-    public function getResource($id, $action, $queryParams)
+    public function getResource($id, $action, $queryParams, $userData)
     {
    
     }
-    public function postCollection($id, $action, $queryParams)
+    public function postCollection($id, $action, $queryParams, $userData)
     {
 
     }
-    public function postResource($id,  $queryParams)
+    public function postResource($id, $action, $queryParams, $userData)
     {
-        die('wrong endpoint');
         if($id === 'register') {
             $this->authService->login();
         }
         RequestHandler::invalidEndpoint();
     }
-    public function putResource($id, $action, $queryParams)
+    public function putResource($id, $action, $queryParams, $userData)
     {
 
     }
-    public function deleteResource($id, $action, $queryParams)
+    public function deleteResource($id, $action, $queryParams, $userData)
     {
     }
 

@@ -23,7 +23,6 @@ class AuthService
     {
         $data = RequestHandler::getPayload();
         AuthValidator::validateLogin($data);
-        
     }
 
 }

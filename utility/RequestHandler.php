@@ -51,13 +51,28 @@ class RequestHandler
             exit(0);
         }
     }
-    // check route
     public static function invalidEndpoint()
     {
         self::sendResponseArray(404, ['error' => 'Invalid endpoint!']);
     }
     public static function unprocessableEntity($item)
     {
-        // self::sendResponseArray(422, ['error' => 'Unprocessable Entity', 'message' => $item . ' is required!']);
+        self::sendResponseArray(422, ['error' => 'Unprocessable Entity', 'message' => $item . ' is required!']);
+    }
+    // parse query paramns
+    public static function parseQueryParams()
+    {
+        $queryParams = [];
+        $query = $_SERVER['QUERY_STRING'];
+        $queryArray = explode('&', $query);
+        if (empty($query)) {
+            return $queryParams;
+        }
+        foreach ($queryArray as $param) {
+            list($key, $value) = explode('=', $param);
+            $queryParams[$key] = $value;
+        }
+    
+        return $queryParams;
     }
 }
