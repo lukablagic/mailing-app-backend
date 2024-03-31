@@ -9,15 +9,9 @@ class MailController
 {
     private $mail;
 
-<<<<<<< HEAD
-    public function __construct($con,)
-    {
-
-=======
     public function __construct($con)
     {
         $this->mail = new Mail($con);
->>>>>>> 0baf2b003ea3b1515210b02d5d448faaa0ffe32e
     }
 
     public function getCollection()
