@@ -17,4 +17,25 @@ class AuthValidator
             RequestHandler::unprocessableEntity('password');
         }
     }
+    // validate regitsre
+    public static function validateRegister($payload)
+    {
+        $response = [];
+        if (!isset($payload['name'])) {
+            $response[] = 'name';
+        }
+        if (!isset($payload['surname'])) {
+            $response[] = 'surname';
+        }
+        if (!isset($payload['email'])) {
+            $response[] = 'email';
+        }
+        if (!isset($payload['password'])) {
+            $response[] = 'password';
+        }
+
+        if (!empty($response)) {
+            RequestHandler::unprocessableEntity($response);
+        }
+    }
 }

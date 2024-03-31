@@ -24,17 +24,16 @@ class AuthService
         $data = RequestHandler::getPayload();
         AuthValidator::validateLogin($data);
         $user = $this->user->exists($data['email']);
-        if ($user === false) {
+        if ($user === true) {
             return false;
         }
-
     }
     public function register()
     {
         $data = RequestHandler::getPayload();
         AuthValidator::validateLogin($data);
         $user = $this->user->exists($data['email']);
-        if ($user === false) {
+        if ($user === true) {
             return false;
         }
         $password = password_hash($data['password'], PASSWORD_DEFAULT);
@@ -46,4 +45,3 @@ class AuthService
         return true;
     }
 }
-?>

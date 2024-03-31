@@ -31,7 +31,7 @@ class User
     }
    public function exists($email)
     {
-        $stmt = $this->conn->prepare("SELECT COUNT(*) as counter FROM users WHERE email = :email");
+        $stmt = $this->conn->prepare("SELECT COUNT(*) as `counter` FROM users WHERE email = :email");
         $stmt->bindParam(':email', $email);
         $stmt->execute();
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
