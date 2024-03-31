@@ -29,14 +29,16 @@ class User
         }
         return false;
     }
-    public function getUserByEmail($email)
+   public function exists($email)
     {
-        $stmt = $this->conn->prepare("SELECT * FROM users WHERE email = :email");
+        $stmt = $this->conn->prepare("SELECT COUNT(*) as counter FROM users WHERE email = :email");
         $stmt->bindParam(':email', $email);
         $stmt->execute();
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        return $user;
+        if ($user['counter'] > 0) {
+            return true;
+        }
+        return false;
     }
     public function getUserByToken($token)
     {

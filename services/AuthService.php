@@ -23,7 +23,27 @@ class AuthService
     {
         $data = RequestHandler::getPayload();
         AuthValidator::validateLogin($data);
-    }
+        $user = $this->user->exists($data['email']);
+        if ($user === false) {
+            return false;
+        }
 
+    }
+    public function register()
+    {
+        $data = RequestHandler::getPayload();
+        AuthValidator::validateLogin($data);
+        $user = $this->user->exists($data['email']);
+        if ($user === false) {
+            return false;
+        }
+        $password = password_hash($data['password'], PASSWORD_DEFAULT);
+        $token = bin2hex(random_bytes(16));
+        $response = $this->user->insert($data['name'], $data['surname'], $data['email'], $password, $token);
+        if ($response === false) {
+            return false;
+        }
+        return true;
+    }
 }
 ?>
