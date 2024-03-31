@@ -1,5 +1,4 @@
 <?php
-require 'src/utility/RequestHandler.php'; 
  
 require __DIR__ . '../vendor/autoload.php';
 
