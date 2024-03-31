@@ -1,12 +1,6 @@
 {
     "autoload": {
         "psr-4": {
-<<<<<<< HEAD
-            "Config\\": "config/",
-            "Controllers\\": "controllers/",
-            "Models\\": "models/",
-            "Utility\\": "utility/"
-=======
             "Router\\": "src/routers/",
             "Controller\\": "src/controllers/",
             "Config\\": "src/config/",
@@ -14,7 +8,6 @@
             "Model\\": "src/models/",
             "Service\\": "src/services/",
             "Validator\\": "src/validators/"
->>>>>>> 0baf2b003ea3b1515210b02d5d448faaa0ffe32e
         }
     },
     "require": {
