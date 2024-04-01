@@ -29,7 +29,7 @@ class User
         }
         return false;
     }
-   public function exists($email)
+    public function exists($email)
     {
         $stmt = $this->conn->prepare("SELECT COUNT(*) as `counter` FROM users WHERE email = :email");
         $stmt->bindParam(':email', $email);
@@ -40,62 +40,14 @@ class User
         }
         return false;
     }
-    public function getUserByToken($token)
+    public function updateToken($email, $token)
     {
-        $stmt = $this->conn->prepare("SELECT * FROM users WHERE token = :token");
-        $stmt->bindParam(':token', $token);
-        $stmt->execute();
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-        if ($user && $stmt->rowCount() > 0) {
-            return $user;
-        }
-        return false;
-    }
-    public function getUserData($token)
-    {
-        $stmt = $this->conn->prepare("SELECT  name, surname,email,profile_picture FROM users WHERE token = :token");
-        $stmt->bindParam(':token', $token);
-        $stmt->execute();
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-        if ($user && $stmt->rowCount() > 0) {
-            return $user;
-        }
-        return false;
-    }
-    public function getUserId($email, $password)
-    {
-        $stmt = $this->conn->prepare("SELECT id FROM users WHERE email = :email AND password = :password");
+        $query = "UPDATE users SET token = :token WHERE email = :email";
+        $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':email', $email);
-        $stmt->bindParam(':password', $password);
-        $stmt->execute();
-        $userId = $stmt->fetch(PDO::FETCH_ASSOC);
-        if ($userId && $stmt->rowCount() > 0) {
-
-            return $userId;
-        }
-        return false;
+        $stmt->bindParam(':token', $token);
+        return  $stmt->execute();
     }
-    public function getAllUsers()
-    {
-        $stmt = $this->conn->prepare("SELECT * FROM users WHERE active = 1");
-        $stmt->execute();
-        $users = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $users;
-    }
-
-    public function userExisits(string $email, string $password)
-    {
-        $stmt = $this->conn->prepare("SELECT * FROM users WHERE email = :email AND password = :password");
-        $stmt->bindParam(':email', $email);
-        $stmt->bindParam(':password', $password);
-        $stmt->execute();
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-        if ($user && $stmt->rowCount() > 0) {
-            return true;
-        }
-        return false;
-    }
-
     public function removeUserToken($token)
     {
         $stmt = $this->conn->prepare("UPDATE users SET token = NULL WHERE token = :token");
@@ -106,7 +58,11 @@ class User
         }
         return false;
     }
-
+    public function getUser($email)
+    {
+        $stmt = $this->conn->prepare("SELECT * FROM users WHERE email = :email");
+        $stmt->bindParam(':email', $email);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
 }
-
-?>

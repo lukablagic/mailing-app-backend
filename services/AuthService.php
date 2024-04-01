@@ -18,15 +18,35 @@ class AuthService
     {
         $this->user = new User($conn);
     }
-
+    /**
+     * Returns a token if the user exists and the password is correct 
+     * @return string|bool
+     **/
     public function login()
     {
         $data = RequestHandler::getPayload();
         AuthValidator::validateLogin($data);
-        $user = $this->user->exists($data['email']);
-        if ($user === true) {
+       
+        $exits = $this->user->exists($data['email']);
+        if ($exits === false) {
             return false;
         }
+        $user = $this->user->getUser($data['email']);
+        $password = $user['password'];
+
+        if (password_verify($data['password'], $password) === false) {
+            return false;
+        }
+        
+        $token = bin2hex(random_bytes(16));
+        
+        $response = $this->user->updateToken($data['email'], $token);
+        
+        if ($response === false) {
+            return false;
+        }
+        
+        return $token;
     }
     public function register()
     {

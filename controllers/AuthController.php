@@ -32,10 +32,11 @@ class AuthController
     {
         
         if ($id === 'login') {
-            $response = $this->authService->login();
-            if ($response === false) {
+            $token = $this->authService->login();
+            if ($token === false) {
                 RequestHandler::sendResponseArray(400, ['message' => 'Wrong email or password!']);
             }
+            RequestHandler::sendResponseArray(200, ['token' => $token]);
         }
        
         if ($id === 'register') {
