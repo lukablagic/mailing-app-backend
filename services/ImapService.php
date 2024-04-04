@@ -49,7 +49,6 @@ class ImapService
         }
         return $emails;
     }
-    // prase emails 
     public function parseEmails($imap, $emails): array
     {
         $parsedEmails = [];
@@ -58,13 +57,11 @@ class ImapService
         }
         return $parsedEmails;
     }
-    // prase body
     public function parseBody($imap, $email)
     {
         $body = imap_fetchbody($imap, $email, 1);
         return $body;
     }
-    // parse headers
     public function parseHeaders($imap, $email)
     {
         $headers = imap_fetchheader($imap, $email);

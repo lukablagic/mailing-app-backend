@@ -7,7 +7,8 @@
             "Utility\\": "utility/",
             "Model\\": "models/",
             "Service\\": "services/",
-            "Validator\\": "validators/"
+            "Validator\\": "validators/",
+            "Automated\\": "automated/"
         }
     },
     "require": {
