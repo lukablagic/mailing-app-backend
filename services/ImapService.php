@@ -11,20 +11,18 @@ class ImapService
     private  $port = 993;
     private  $protocol = 'imap';
     private  $ssl = 'ssl';
-    private  $folder = 'INBOX';
 
-    public function __construct($server, $port = 993, $folder = 'INBOX', $protocol = 'imap', $useSSL = true)
+    public function __construct($server, $port = 993, $protocol = 'imap', $useSSL = true)
     {
         $this->server = $server;
         $this->port = $port;
-        $this->folder = $folder;
         $this->protocol = $protocol;
         $this->ssl = $useSSL ? 'ssl' : 'novalidate-cert';
     }
 
-    public function connect($email, $password): Connection|false
+    public function connect($email, $password, $folder): Connection|false
     {
-        $mailbox = "{" . $this->server . ":" . $this->port . "/" . $this->protocol . "/" . $this->ssl . "}" . $this->folder;
+        $mailbox = "{" . $this->server . ":" . $this->port . "/" . $this->protocol . "/" . $this->ssl . "}" . $folder;
         $imap = imap_open($mailbox, $email, $password);
 
         if ($imap === false) {
@@ -43,7 +41,7 @@ class ImapService
     }
     public function fetchEmails($imap, $criteria): array | null
     {
-        $emails = imap_search($imap, $criteria);
+        $emails = imap_search($imap, $criteria,SE_UID);
         if ($emails === false) {
             return null;
         }
