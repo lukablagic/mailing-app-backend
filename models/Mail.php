@@ -14,15 +14,30 @@ class Mail
     {
         $this->conn = $conn;
     }
-    // getall
-    public function getAll()
+    public function getAll($team_id)
     {
-        $query = "SELECT * FROM mails";
+        $query = "SELECT * FROM mails WHERE team_id = :team_id";
         $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':team_id', $team_id);
         $stmt->execute();
         $emails = $stmt->fetchAll(PDO::FETCH_ASSOC);
         return $emails;
     }
-
-
+    public function insert($email)
+    {
+        $query = "INSERT INTO mails (`uid`, id, `subject`, body, sent_date, is_read, `size`, from_name, `from`,  reply_to, imap_number,charset) VALUES (:uid, :id, :subject, :body, :sent_date, :is_read, :size, :from_name, :from, :reply_to, :imap_number, 'UTF-8')";
+                $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':uid', $email->uid);
+        $stmt->bindParam(':id', $email->id);
+        $stmt->bindParam(':subject', $email->subject);
+        $stmt->bindParam(':body', $email->body);
+        $stmt->bindParam(':sent_date', $email->sent_date);
+        $stmt->bindParam(':is_read', $email->is_read);
+        $stmt->bindParam(':size', $email->size);
+        $stmt->bindParam(':from_name', $email->from_name);
+        $stmt->bindParam(':from', $email->from);
+        $stmt->bindParam(':reply_to', $email->reply_to);
+        $stmt->bindParam(':imap_number', $email->imap_number);
+        $stmt->execute();
+    }
 }
