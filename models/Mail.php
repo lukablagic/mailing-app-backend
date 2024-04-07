@@ -25,10 +25,9 @@ class Mail
     }
     public function insert($email)
     {
-        $query = "INSERT INTO mails (`uid`, id, `subject`, body, sent_date, is_read, `size`, from_name, `from`,  reply_to, imap_number,charset) VALUES (:uid, :id, :subject, :body, :sent_date, :is_read, :size, :from_name, :from, :reply_to, :imap_number, 'UTF-8')";
-                $stmt = $this->conn->prepare($query);
+        $query = "INSERT INTO mails (`uid`,  `subject`, body, sent_date, is_read, `size`, from_name, `from`,  reply_to, imap_number,charset,team_id,folder) VALUES (:uid, :subject, :body, :sent_date, :is_read, :size, :from_name, :from, :reply_to, :imap_number, 'UTF-8',:team_id,:folder)";
+        $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':uid', $email->uid);
-        $stmt->bindParam(':id', $email->id);
         $stmt->bindParam(':subject', $email->subject);
         $stmt->bindParam(':body', $email->body);
         $stmt->bindParam(':sent_date', $email->sent_date);
@@ -38,6 +37,20 @@ class Mail
         $stmt->bindParam(':from', $email->from);
         $stmt->bindParam(':reply_to', $email->reply_to);
         $stmt->bindParam(':imap_number', $email->imap_number);
+        $stmt->bindParam(':team_id', $email->team_id);
+        $stmt->bindParam(':folder', $email->folder);
         $stmt->execute();
+        return $this->conn->lastInsertId();
+    }
+    // getImapNumbers
+    public function getImapNumbers($team_id, $folder)
+    {
+        $query = "SELECT imap_number FROM mails WHERE team_id = :team_id AND folder = :folder";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':team_id', $team_id);
+        $stmt->bindParam(':folder', $folder);
+        $stmt->execute();
+        $imapNumbers = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        return $imapNumbers;
     }
 }

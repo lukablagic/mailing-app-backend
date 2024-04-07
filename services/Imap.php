@@ -62,7 +62,7 @@ class Imap
             $message =  new Message($imapRespource, $imap_id);
 
             $emailObject->subject = $message->getSubject();
-            $emailObject->id = $message->getId();
+            $emailObject->imap_number = $imap_id;
             $emailObject->charset = $message->getCharset();
             $emailObject->attachments = $message->getAttachments();
             $emailObject->body = $this->parseBody($message);

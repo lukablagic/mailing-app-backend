@@ -30,29 +30,42 @@ $allTeams = $teams->getAll();
 foreach ($allTeams as $team) {
     $credentials = $teamsCredentials->getByTeamId($team['id']);
 
-
+    $folder = 'INBOX';
     $imapService = new Imap($credentials['imap_server'], $credentials['imap_port'],  $credentials['protocol'], $credentials['use_ssl'] === 1);
-    $imap = $imapService->connect($credentials['email'], $credentials['password'],  'INBOX');
+    $imap = $imapService->connect($credentials['email'], $credentials['password'], $folder);
     if ($imap === false) {
         continue;
     }
 
     $emails = $imapService->fetchEmails($imap, 'ALL');
-
+    // check if we already have that imap number and that folder 
+    $existingImapNumbers = $mail->getImapNumbers($team['id'], $folder);
+    $emails = array_diff($emails, $existingImapNumbers);
+    var_dump($emails);
     $parsedEmails = $imapService->parseEmails($imap, $emails);
 
     $conn->beginTransaction();
     try {
         foreach ($parsedEmails as $parsedEmail) {
-            $mail->insert($parsedEmail);
-            foreach ($parsedEmail->to as $to) {
-                $mailTo->insert($parsedEmail->id, $to);
+            $parsedEmail->team_id = $team['id'];
+            $parsedEmail->folder = $folder;
+
+            $mail_id =  $mail->insert($parsedEmail);
+            
+            if (!empty($parsedEmail->to)) {
+                foreach ($parsedEmail->to as $to) {
+                    $mailTo->insert($mail_id, $to);
+                }
             }
-            foreach ($parsedEmail->cc as $cc) {
-                $mailCc->insert($parsedEmail->id, $cc);
+            if (!empty($parsedEmail->cc)) {
+                foreach ($parsedEmail->cc as $cc) {
+                    $mailCc->insert($mail_id, $cc);
+                }
             }
-            foreach ($parsedEmail->bcc as $bcc) {
-                $mailBcc->insert($parsedEmail->id, $bcc);
+            if (!empty($parsedEmail->bcc)) {
+                foreach ($parsedEmail->bcc as $bcc) {
+                    $mailBcc->insert($mail_id, $bcc);
+                }
             }
         }
 
