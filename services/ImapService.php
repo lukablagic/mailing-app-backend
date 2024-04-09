@@ -2,14 +2,13 @@
 
 namespace Service;
 
-use Exception;
 use IMAP\Connection;
 use DateTime;
-use Ddeboer\Imap\Connection as ImapConnection;
 use Ddeboer\Imap\ImapResource;
 use Ddeboer\Imap\Message;
+use Ddeboer\Imap\Server;
 
-class Imap
+class ImapService
 {
     private  $server = 'imap.gmail.com';
     private  $port = 993;
@@ -122,27 +121,21 @@ class Imap
         }
         return $headers;
     }
-    public function getFolders(Connection $imap, $server): array
+    public function getFolders($email, $password): array
     {
-        // using ddebore/imap get all folders names 
-        $imapRespource =  new ImapResource($imap);
-        $connection = new ImapConnection($imapRespource, $server);
-        $mailboxes = $connection->getMailBoxes();
+        $server = new Server($this->server, $this->port, $this->ssl);
+    
+        $connection = $server->authenticate($email, $password);
+    
+        $mailboxes = $connection->getMailboxes();
+    
         $folders = [];
         foreach ($mailboxes as $mailbox) {
             $folders[] = $mailbox->getName();
         }
-        var_dump($folders);
+    
+        $connection->close();
+    
         return $folders;
-    }
-    // basic connection 
-    public function basicConnection()
-    {
-        $mailbox = "{" . $this->server . ":" . $this->port . "/" . $this->protocol . "/" . $this->ssl . "}*";
-        $imap = imap_open($mailbox, 'email', 'password');
-        if ($imap === false) {
-            throw new Exception('Cannot connect to mailbox');
-        }
-        return $imap;
     }
 }

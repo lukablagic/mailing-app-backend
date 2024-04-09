@@ -7,7 +7,7 @@ require_once '../vendor/autoload.php';
 use Config\Database;
 use Model\Teams;
 use Model\TeamsCredentials;
-use Service\Imap;
+use Service\ImapService;
 use Model\Mail;
 use Model\MailTo;
 use Model\MailCc;
@@ -31,7 +31,7 @@ foreach ($allTeams as $team) {
     $credentials = $teamsCredentials->getByTeamId($team['id']);
 
     $folder = 'INBOX';
-    $imapService = new Imap($credentials['imap_server'], $credentials['imap_port'],  $credentials['protocol'], $credentials['use_ssl'] === 1);
+    $imapService = new ImapService($credentials['imap_server'], $credentials['imap_port'],  $credentials['protocol'], $credentials['use_ssl'] === 1);
     $imap = $imapService->connect($credentials['email'], $credentials['password'], $folder);
     if ($imap === false) {
         continue;
