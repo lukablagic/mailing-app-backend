@@ -75,4 +75,15 @@ class RequestHandler
     
         return $queryParams;
     }
+    // get barer token 
+    public static function getBearerToken()
+    {
+        $headers = getallheaders();
+        if (isset($headers['Authorization'])) {
+            $authHeader = $headers['Authorization'];
+            $authHeaderArray = explode(' ', $authHeader);
+            return $authHeaderArray[1];
+        }
+        return null;
+    }
 }

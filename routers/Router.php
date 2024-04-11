@@ -3,6 +3,7 @@
 namespace Router;
 
 use Config\Database;
+use Service\AuthService;
 use Utility\RequestHandler;
 
 class Router
@@ -13,10 +14,10 @@ class Router
         $endpoints = explode('/', $_SERVER['REQUEST_URI']);
         $access = explode('/', $endpoint);
         if ($access[0] !== $endpoints[2]) {
-            return;
+            return false;
         }
         if ($_SERVER['REQUEST_METHOD'] != $method) {
-            return;
+            return false;
         }
         if ($access[0] === $endpoints[2] && $_SERVER['REQUEST_METHOD'] != $method) {
             RequestHandler::sendResponseArray(405, ['error' => 'Method Not Allowed']);
@@ -34,73 +35,99 @@ class Router
         $db = new Database();
         return $db->connect();
     }
-    public static function authorize()
+    public static function authorize($conn)
     {
-        $user = [];
+        $authService = new AuthService($conn);
+        $user = $authService->authorize();
+        if ($user === false) {
+            RequestHandler::sendResponseArray(401, ['error' => 'Unauthorized!']);
+        }
         return $user;
     }
     public static function getCollection($endpoint, $controllerName, $isProtected)
     {
         $endpoins =  self::init($endpoint, 'GET');
+        var_dump($endpoins);
+        if ($endpoins === false) {
+            return;
+        }
         $queryParams = RequestHandler::parseQueryParams();
         $conn = self::createConnection();
-        $userData = self::authorize();
+        $userData = self::authorize($conn);
         $controller = new $controllerName($conn);
-        $controller->getCollection($endpoins[3],  $endpoins[4], $queryParams, $userData);
+        $controller->getCollection($endpoins[2],  $endpoins[3], $queryParams, $userData);
     }
     public static function getResource($endpoint, $controllerName, $isProtected)
     {
         $endpoins =  self::init($endpoint, 'GET');
+        if ($endpoins === false) {
+            return;
+        }
         $queryParams = RequestHandler::parseQueryParams();
         $conn = self::createConnection();
-        $userData = self::authorize();
+        $userData = self::authorize($conn);
         $controller = new $controllerName($conn);
-        $controller->getResource($endpoins[3], $endpoins[4], $queryParams, $userData);
+        $controller->getResource($endpoins[2],  $endpoins[3], $queryParams, $userData);
     }
 
     public static function postCollection($endpoint, $controllerName, $isProtected)
     {
         $endpoins =  self::init($endpoint, 'POST');
+        if ($endpoins === false) {
+            return;
+        }
         $queryParams = RequestHandler::parseQueryParams();
         $conn = self::createConnection();
-        $userData = self::authorize();
+        $userData = self::authorize($conn);
         $controller = new $controllerName($conn);
-        $controller->postCollection($endpoins[3], $endpoins[4], $queryParams, $userData);
+        $controller->postCollection($endpoins[2],  $endpoins[3], $queryParams, $userData);
     }
     public static function postResource($endpoint, $controllerName, $isProtected)
     {
         $endpoins =   self::init($endpoint, 'POST');
+        if ($endpoins === false) {
+            return;
+        }
         $queryParams = RequestHandler::parseQueryParams();
         $conn = self::createConnection();
-        $userData = self::authorize();
+        $userData = self::authorize($conn);
         $controller = new $controllerName($conn);
-        $controller->postResource($endpoins[3], $endpoins[4], $queryParams, $userData);
+        $controller->postResource($endpoins[2],  $endpoins[3], $queryParams, $userData);
     }
     public static function putCollection($endpoint, $controllerName, $isProtected)
     {
         $endpoins =   self::init($endpoint, 'PUT');
+        if ($endpoins === false) {
+            return;
+        }
         $queryParams = RequestHandler::parseQueryParams();
         $conn = self::createConnection();
-        $userData = self::authorize();
+        $userData = self::authorize($conn);
         $controller = new $controllerName($conn);
-        $controller->putResource($endpoins[3], $endpoins[4], $queryParams, $userData);
+        $controller->putResource($endpoins[2],  $endpoins[3], $queryParams, $userData);
     }
     public static function putResource($endpoint, $controllerName, $isProtected)
     {
         $endpoins =   self::init($endpoint, 'PUT');
+        if ($endpoins === false) {
+            return;
+        }
         $queryParams = RequestHandler::parseQueryParams();
         $conn = self::createConnection();
-        $userData = self::authorize();
+        $userData = self::authorize($conn);
         $controller = new $controllerName($conn);
-        $controller->putResource($endpoins[3], $endpoins[4], $queryParams, $userData);
+        $controller->putResource($endpoins[2],  $endpoins[3], $queryParams, $userData);
     }
     public static function deleteCollection($endpoint, $controllerName, $isProtected)
     {
         $endpoins =   self::init($endpoint, 'DELETE');
+        if ($endpoins === false) {
+            return;
+        }
         $queryParams = RequestHandler::parseQueryParams();
         $conn = self::createConnection();
-        $userData = self::authorize();
+        $userData = self::authorize($conn);
         $controller = new $controllerName($conn);
-        $controller->deleteCollection($endpoins[3], $endpoins[4], $queryParams, $userData);
+        $controller->deleteCollection($endpoins[2],  $endpoins[3], $queryParams, $userData);
     }
 }

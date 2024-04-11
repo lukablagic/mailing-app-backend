@@ -64,4 +64,17 @@ class AuthService
         }
         return true;
     }
+    // authorize the user if the token is valid return all user data with team id 
+    public function authorize()
+    {
+        $token = RequestHandler::getBearerToken();
+        if ($token === false) {
+          RequestHandler::sendResponseArray(401, ['message' => 'Unauthorized!']);
+        }
+        $user = $this->user->getUserByToken($token);
+        if ($user === false) {
+            return false;
+        }
+        return $user;
+    }
 }

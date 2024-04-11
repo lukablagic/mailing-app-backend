@@ -4,7 +4,6 @@ namespace Service;
 
 use Ddeboer\Imap\Connection;
 use Ddeboer\Imap\Search\Date\Since;
-use Ddeboer\Imap\ImapResource;
 use Ddeboer\Imap\Message;
 use Ddeboer\Imap\Server;
 use DateTime;

@@ -65,4 +65,15 @@ class User
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
+    // getUserByToken
+    public function getUserByToken($token)
+    {
+        $stmt = $this->conn->prepare("SELECT * FROM users WHERE token = :token");
+        $stmt->bindParam(':token', $token);
+        $stmt->execute();
+        if ($stmt->rowCount() === 0) {
+            return false;
+        }
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
 }

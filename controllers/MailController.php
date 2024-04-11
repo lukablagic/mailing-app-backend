@@ -14,25 +14,23 @@ class MailController
         $this->mail = new Mail($con);
     }
 
-    public function getCollection()
+    public function getCollection($id, $action, $queryParams, $userData)
     {
-        $mails = $this->mail->getAll();
-        RequestHandler::sendResponseArray(200, ['emails' => $mails, 'message' => 'Emails retrieved successfully']);
+        if ($id === 'threads') {
+            $mails = $this->mail->getAll($userData['team_id']);
+            RequestHandler::sendResponseArray(200, ['emails' => $mails, 'message' => 'Emails retrieved successfully']);
+        }
     }
-    public function getResource($id)
+    public function getResource($id, $action, $queryParams, $userData)
     {
-      
     }
-    public function postCollection()
+    public function postCollection($id, $action, $queryParams, $userData)
     {
-      
     }
-    public function putResource($id)
+    public function putResource($id, $action, $queryParams, $userData)
     {
-      
     }
-    public function deleteResource($id)
+    public function deleteResource($id, $action, $queryParams, $userData)
     {
-      
     }
 }
