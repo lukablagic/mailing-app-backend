@@ -1,11 +1,12 @@
 <?php
- 
-require __DIR__ . '../vendor/autoload.php';
+ ini_set('display_errors', 1);
+// set imap 
+ error_reporting(E_ALL);
+require __DIR__ . '/vendor/autoload.php';
 
 use Utility\RequestHandler;
 use Router\Router;
 
-error_reporting(E_ALL);
 
 
 RequestHandler::enableCORS();

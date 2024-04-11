@@ -2,18 +2,18 @@
 
 namespace Service;
 
-use IMAP\Connection;
-use DateTime;
+use Ddeboer\Imap\Connection;
 use Ddeboer\Imap\ImapResource;
 use Ddeboer\Imap\Message;
 use Ddeboer\Imap\Server;
+use DateTime;
 
 class ImapService
 {
-    private  $server = 'imap.gmail.com';
-    private  $port = 993;
-    private  $protocol = 'imap';
-    private  $ssl = 'ssl';
+    private $server = 'imap.gmail.com';
+    private $port = 993;
+    private $protocol = 'imap';
+    private $ssl = 'ssl';
 
     public function __construct($server, $port = 993, $protocol = 'imap', $useSSL = true)
     {
@@ -21,6 +21,7 @@ class ImapService
         $this->port = $port;
         $this->protocol = $protocol;
         $this->ssl = $useSSL ? 'ssl' : 'novalidate-cert';
+        
     }
 
     public function connect($email, $password, $folder): Connection|false
@@ -42,7 +43,7 @@ class ImapService
         }
         return $result;
     }
-    public function fetchEmails($imap, $criteria): array | null
+    public function fetchEmails($imap, $criteria): array|null
     {
         $emails = imap_search($imap, $criteria, SE_UID);
         if ($emails === false) {
@@ -57,8 +58,8 @@ class ImapService
             $emailObject = new \stdClass();
 
             $headers = $this->parseHeaders($imap, $imap_id);
-            $imapRespource =  new ImapResource($imap);
-            $message =  new Message($imapRespource, $imap_id);
+            $imapRespource = new ImapResource($imap);
+            $message = new Message($imapRespource, $imap_id);
 
             $emailObject->subject = $message->getSubject();
             $emailObject->imap_number = $imap_id;
@@ -123,19 +124,20 @@ class ImapService
     }
     public function getFolders($email, $password): array
     {
-        $server = new Server($this->server, $this->port, $this->ssl);
-    
+        $server = new Server($this->server);
+
         $connection = $server->authenticate($email, $password);
-    
+
         $mailboxes = $connection->getMailboxes();
-    
+
         $folders = [];
+
         foreach ($mailboxes as $mailbox) {
             $folders[] = $mailbox->getName();
         }
-    
+
         $connection->close();
-    
+
         return $folders;
     }
 }

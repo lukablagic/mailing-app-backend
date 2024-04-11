@@ -2,6 +2,7 @@
 
 namespace Automated;
 
+ini_set("display_errors", 1);
 require_once '../vendor/autoload.php';
 
 use Config\Database;
@@ -31,17 +32,15 @@ foreach ($allTeams as $team) {
     $credentials = $teamsCredentials->getByTeamId($team['id']);
 
     $folder = 'INBOX';
-    $imapService = new ImapService($credentials['imap_server'], $credentials['imap_port'],  $credentials['protocol'], $credentials['use_ssl'] === 1);
-    $imap = $imapService->connect($credentials['email'], $credentials['password'], $folder);
+    $imapService = new ImapService($credentials['imap_server'], $credentials['imap_port'], $credentials['protocol'], $credentials['use_ssl'] === 1);
+    $imap = $imapService->connect($credentials['email'], $credentials['imap_password'], $folder);
     if ($imap === false) {
         continue;
     }
-
-    $emails = $imapService->fetchEmails($imap, 'ALL');
-    // check if we already have that imap number and that folder 
-    $existingImapNumbers = $mail->getImapNumbers($team['id'], $folder);
+  
     $emails = array_diff($emails, $existingImapNumbers);
-    var_dump($emails);
+
+
     $parsedEmails = $imapService->parseEmails($imap, $emails);
 
     $conn->beginTransaction();
@@ -50,8 +49,8 @@ foreach ($allTeams as $team) {
             $parsedEmail->team_id = $team['id'];
             $parsedEmail->folder = $folder;
 
-            $mail_id =  $mail->insert($parsedEmail);
-            
+            $mail_id = $mail->insert($parsedEmail);
+
             if (!empty($parsedEmail->to)) {
                 foreach ($parsedEmail->to as $to) {
                     $mailTo->insert($mail_id, $to);

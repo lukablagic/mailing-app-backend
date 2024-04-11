@@ -4,37 +4,35 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ae95be37f78569ce99a5922d9efebbc8",
+    "content-hash": "8bb3f32d622ad51356a3046db7a3b886",
     "packages": [
         {
             "name": "ddeboer/imap",
-            "version": "1.19.0",
+            "version": "1.16.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/ddeboer/imap.git",
-                "reference": "30800b1cfeacc4add5bb418e40a8b6e95a8a04ac"
+                "reference": "92647fd61572b258f2804f5721f1c4c1911289e2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ddeboer/imap/zipball/30800b1cfeacc4add5bb418e40a8b6e95a8a04ac",
-                "reference": "30800b1cfeacc4add5bb418e40a8b6e95a8a04ac",
+                "url": "https://api.github.com/repos/ddeboer/imap/zipball/92647fd61572b258f2804f5721f1c4c1911289e2",
+                "reference": "92647fd61572b258f2804f5721f1c4c1911289e2",
                 "shasum": ""
             },
             "require": {
-                "ext-dom": "*",
                 "ext-iconv": "*",
                 "ext-imap": "*",
-                "ext-libxml": "*",
                 "ext-mbstring": "*",
-                "php": "~8.2.0 || ~8.3.0"
+                "php": "~8.1.0 || ~8.2.0"
             },
             "require-dev": {
-                "friendsofphp/php-cs-fixer": "^3.38.2",
-                "laminas/laminas-mail": "^2.25.1",
-                "phpstan/phpstan": "^1.10.43",
-                "phpstan/phpstan-phpunit": "^1.3.15",
-                "phpstan/phpstan-strict-rules": "^1.5.2",
-                "phpunit/phpunit": "^10.4.2"
+                "friendsofphp/php-cs-fixer": "^3.13.2",
+                "laminas/laminas-mail": "^2.21.1",
+                "phpstan/phpstan": "^1.9.8",
+                "phpstan/phpstan-phpunit": "^1.3.3",
+                "phpstan/phpstan-strict-rules": "^1.4.4",
+                "phpunit/phpunit": "^9.5.27"
             },
             "type": "library",
             "autoload": {
@@ -68,7 +66,7 @@
             ],
             "support": {
                 "issues": "https://github.com/ddeboer/imap/issues",
-                "source": "https://github.com/ddeboer/imap/tree/1.19.0"
+                "source": "https://github.com/ddeboer/imap/tree/1.16.0"
             },
             "funding": [
                 {
@@ -80,7 +78,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2023-11-20T14:41:54+00:00"
+            "time": "2023-02-16T10:30:38+00:00"
         },
         {
             "name": "phpmailer/phpmailer",

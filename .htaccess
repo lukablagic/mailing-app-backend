@@ -1,8 +1,7 @@
 RewriteEngine On
 
-# Exclude api/automated route from rewrite rule
 RewriteCond %{REQUEST_URI} !^/api/automated
-RewriteRule . index.php
+RewriteRule ^.*$ index.php [L]
 
 RewriteCond %{HTTP:Authorization} .+
-RewriteRule ^ - [E=HTTP_AUTHORIZATION:%0]
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization},L]
