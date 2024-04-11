@@ -47,7 +47,6 @@ class Router
     public static function getCollection($endpoint, $controllerName, $isProtected)
     {
         $endpoins =  self::init($endpoint, 'GET');
-        var_dump($endpoins);
         if ($endpoins === false) {
             return;
         }

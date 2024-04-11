@@ -17,7 +17,7 @@ class MailController
     public function getCollection($id, $action, $queryParams, $userData)
     {
         if ($id === 'threads') {
-            $mails = $this->mail->getAll($userData['team_id']);
+            $mails = $this->mail->getAllThreads($userData['team_id']);
             RequestHandler::sendResponseArray(200, ['emails' => $mails, 'message' => 'Emails retrieved successfully']);
         }
     }

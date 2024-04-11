@@ -68,7 +68,10 @@ class User
     // getUserByToken
     public function getUserByToken($token)
     {
-        $stmt = $this->conn->prepare("SELECT * FROM users WHERE token = :token");
+        $stmt = $this->conn->prepare("SELECT * 
+        FROM users
+        JOIN team_members ON users.id = team_members.user_id
+        WHERE token = :token");
         $stmt->bindParam(':token', $token);
         $stmt->execute();
         if ($stmt->rowCount() === 0) {

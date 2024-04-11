@@ -14,9 +14,9 @@ class Mail
     {
         $this->conn = $conn;
     }
-    public function getAll($team_id)
+    public function getAllThreads($team_id)
     {
-        $query = "SELECT * FROM mails WHERE team_id = :team_id";
+        $query = "SELECT `subject`,is_read,id, sent_date,`from`,folder,from_name FROM mails WHERE team_id = :team_id ORDER BY sent_date DESC LIMIT 30";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':team_id', $team_id);
         $stmt->execute();
