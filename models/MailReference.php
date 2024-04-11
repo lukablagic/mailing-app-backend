@@ -2,7 +2,7 @@
 
 namespace Model;
 
-class MailCc
+class MailReference
 {
 
     private $conn;
@@ -12,12 +12,12 @@ class MailCc
     {
         $this->conn = $conn;
     }
-    public function insert($mail_id, $address)
+    public function insert($mail_id, $reference)
     {
-        $query = "INSERT INTO mails_cc (mail_id, `address`) VALUES (?, ?)";
+        $query = "INSERT INTO mails_references (mail_id, `reference`) VALUES (?, ?)";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(1, $mail_id);
-        $stmt->bindParam(2, $address);
+        $stmt->bindParam(2, $reference);
         $stmt->execute();
     }
 }

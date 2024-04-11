@@ -12,6 +12,8 @@ use Service\ImapService;
 use Model\Mail;
 use Model\MailTo;
 use Model\MailCc;
+use Model\MailReference;
+use Model\Folders;
 use Model\MailBcc;
 use Exception;
 
@@ -24,6 +26,8 @@ $mailTo = new MailTo($conn);
 $mailCc = new MailCc($conn);
 $mailBcc = new MailBcc($conn);
 $teamsCredentials = new TeamsCredentials($conn);
+$folders = new Folders($conn);
+$mailReference = new MailReference($conn);
 
 $allTeams = $teams->getAll();
 
@@ -31,53 +35,51 @@ $allTeams = $teams->getAll();
 foreach ($allTeams as $team) {
     $credentials = $teamsCredentials->getByTeamId($team['id']);
 
-    $folder = 'INBOX';
     $imapService = new ImapService($credentials['imap_server'], $credentials['imap_port'], $credentials['protocol'], $credentials['use_ssl'] === 1);
-    $imap = $imapService->connect($credentials['email'], $credentials['imap_password'], $folder);
-    if ($imap === false) {
-        continue;
-    }
-  
-    $emails = array_diff($emails, $existingImapNumbers);
 
 
-    $parsedEmails = $imapService->parseEmails($imap, $emails);
+    $userFolders = $folders->getAll($team['id']);
 
-    $conn->beginTransaction();
-    try {
-        foreach ($parsedEmails as $parsedEmail) {
-            $parsedEmail->team_id = $team['id'];
-            $parsedEmail->folder = $folder;
 
-            $mail_id = $mail->insert($parsedEmail);
+    foreach ($userFolders as $folder) {
+        $parsedEmails = $imapService->getParsedEmails($credentials['email'], $credentials['imap_password'], $folder);
+        $conn->beginTransaction();
+        try {
+            foreach ($parsedEmails as $parsedEmail) {
+                $parsedEmail->team_id = $team['id'];
+                $parsedEmail->folder = $folder;
 
-            if (!empty($parsedEmail->to)) {
-                foreach ($parsedEmail->to as $to) {
-                    $mailTo->insert($mail_id, $to);
+                $mail_id = $mail->insert($parsedEmail);
+
+                if (!empty($parsedEmail->to)) {
+                    foreach ($parsedEmail->to as $to) {
+                        $mailTo->insert($mail_id, $to);
+                    }
+                }
+                if (!empty($parsedEmail->cc)) {
+                    foreach ($parsedEmail->cc as $cc) {
+                        $mailCc->insert($mail_id, $cc);
+                    }
+                }
+                if (!empty($parsedEmail->bcc)) {
+                    foreach ($parsedEmail->bcc as $bcc) {
+                        $mailBcc->insert($mail_id, $bcc);
+                    }
+                }
+                if (!empty($parsedEmail->references)) {
+                    foreach ($parsedEmail->references as $reference) {
+                        $mailReference->insert($mail_id, $reference);
+                    }
                 }
             }
-            if (!empty($parsedEmail->cc)) {
-                foreach ($parsedEmail->cc as $cc) {
-                    $mailCc->insert($mail_id, $cc);
-                }
-            }
-            if (!empty($parsedEmail->bcc)) {
-                foreach ($parsedEmail->bcc as $bcc) {
-                    $mailBcc->insert($mail_id, $bcc);
-                }
-            }
-        }
 
-        if ($imap !== false) {
-            imap_close($imap);
+
+            $conn->commit();
+        } catch (Exception $e) {
+            $conn->rollback();
+
+            var_dump('Error inserting email', $e->getMessage(), $e->getTraceAsString());
+            continue;
         }
-        $conn->commit();
-    } catch (Exception $e) {
-        $conn->rollback();
-        if ($imap !== false) {
-            imap_close($imap);
-        }
-        var_dump('Error inserting email', $e->getMessage(), $e->getTraceAsString());
-        continue;
     }
 }

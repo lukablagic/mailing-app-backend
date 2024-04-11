@@ -37,4 +37,12 @@ class Folders
         }
         return false;
     }
+    public function getAll($team_id)
+    {
+        $query = "SELECT folder FROM folders WHERE team_id = :team_id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':team_id', $team_id);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_COLUMN);
+    }
 }
