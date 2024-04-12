@@ -13,6 +13,8 @@ RequestHandler::enableCORS();
 
 Router::postResource('auth/login', "Controller\AuthController", false);
 Router::getCollection('threads', "Controller\MailController", true);
+Router::getCollection('folders/all', "Controller\FolderController", true);
+
 
 RequestHandler::invalidEndpoint();
 

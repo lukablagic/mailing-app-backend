@@ -2,23 +2,23 @@
 
 namespace Controller;
 
-use Model\Mail;
+use Model\Folders;
 use Utility\RequestHandler;
 
-class MailController
+class FolderController
 {
-    private $mail;
+    private $folders;
 
     public function __construct($con)
     {
-        $this->mail = new Mail($con);
+        $this->folders = new Folders($con);
     }
 
     public function getCollection($id, $action, $queryParams, $userData)
     {
         if ($id === 'all') {
-            $mails = $this->mail->getAllThreads($userData['team_id']);
-            RequestHandler::sendResponseArray(200, ['emails' => $mails, 'message' => 'Emails retrieved successfully']);
+            $folders = $this->folders->getAllFolders($userData['team_id']);
+            RequestHandler::sendResponseArray(200, ['folders' => $folders, 'message' => 'Folders retrieved successfully!']);
         }
     }
     public function getResource($id, $action, $queryParams, $userData)
