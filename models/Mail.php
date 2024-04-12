@@ -14,18 +14,30 @@ class Mail
     {
         $this->conn = $conn;
     }
-    public function getAllThreads($team_id)
+    public function getAllThreads($team_id, $folder = 'INBOX')
     {
-        $query = "SELECT `subject`,is_read,id, sent_date,`from`,folder,from_name FROM mails WHERE team_id = :team_id ORDER BY sent_date DESC LIMIT 30";
+        $query = "SELECT `subject`,
+                is_read,id,
+                sent_date,
+                `from`,
+                folder,
+                from_name
+            FROM mails
+            WHERE team_id = :team_id AND
+            folder = :folder
+            ORDER BY sent_date DESC 
+            LIMIT 30";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':team_id', $team_id);
+        $stmt->bindParam(':folder', $folder);
         $stmt->execute();
         $emails = $stmt->fetchAll(PDO::FETCH_ASSOC);
         return $emails;
     }
     public function insert($email)
     {
-        $query = "INSERT INTO mails (`uid`,  `subject`, body, sent_date, is_read, `size`, from_name, `from`,  reply_to, imap_number,charset,team_id,folder) VALUES (:uid, :subject, :body, :sent_date, :is_read, :size, :from_name, :from, :reply_to, :imap_number, 'UTF-8',:team_id,:folder)";
+        $query = "INSERT INTO mails (`uid`,  `subject`, body, sent_date, is_read, `size`, from_name, `from`,  reply_to, imap_number,charset,team_id,folder)
+        VALUES (:uid, :subject, :body, :sent_date, :is_read, :size, :from_name, :from, :reply_to, :imap_number, 'UTF-8',:team_id,:folder)";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':uid', $email->uid);
         $stmt->bindParam(':subject', $email->subject);
