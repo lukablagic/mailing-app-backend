@@ -28,10 +28,10 @@ class AuthController
     public function postCollection($id, $action, $queryParams, $userData)
     {
     }
-    public function postResource($id, $action, $queryParams, $userData)
+    public function postResource($id, $action, $queryParams)
     {
         
-        if ($id === 'login') {
+        if ($action === 'login') {
             $token = $this->authService->login();
             if ($token === false) {
                 RequestHandler::sendResponseArray(400, ['message' => 'Wrong email or password!']);
@@ -39,7 +39,7 @@ class AuthController
             RequestHandler::sendResponseArray(200, ['token' => $token]);
         }
        
-        if ($id === 'register') {
+        if ($action === 'register') {
             $response = $this->authService->register();
             if ($response === false) {
                 RequestHandler::sendResponseArray(400, ['message' => 'User with this email already exists!']);

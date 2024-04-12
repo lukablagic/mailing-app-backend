@@ -64,7 +64,6 @@ class AuthService
         }
         return true;
     }
-    // authorize the user if the token is valid return all user data with team id 
     public function authorize()
     {
         $token = RequestHandler::getBearerToken();

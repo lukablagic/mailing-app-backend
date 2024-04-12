@@ -89,7 +89,10 @@ class Router
         }
         $queryParams = RequestHandler::parseQueryParams();
         $conn = self::createConnection();
-        $userData = self::authorize($conn);
+        $userData = null; 
+        if ($endpoins[2] === 'auth' && !in_array($endpoins[3], ['login', 'register'])) {
+            $userData = self::authorize($conn);
+        }
         $controller = new $controllerName($conn);
         $controller->postResource($endpoins[2],  $endpoins[3], $queryParams, $userData);
     }
