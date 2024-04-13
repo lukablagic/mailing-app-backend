@@ -16,23 +16,38 @@ class Mail
     }
     public function getAllThreads($team_id, $folder = 'INBOX')
     {
-        $query = "SELECT `subject`,
-                is_read,id,
-                sent_date,
-                `from`,
-                folder,
-                from_name
-            FROM mails
-            WHERE team_id = :team_id AND
-            folder = :folder
-            ORDER BY sent_date DESC 
-            LIMIT 30";
+        $query = "SELECT subject,
+                        MAX(is_read) as is_read,
+                        MAX(id) as id,
+                        MAX(sent_date) as latest_sent_date,
+                        MAX(from_name) as from_name, 
+                        folder,
+                        MAX(`from`) as sender, 
+                        MAX(sent_date) as sent_date 
+                    FROM mails
+                    WHERE team_id = :team_id AND folder = :folder
+                    GROUP BY subject, folder  
+                    ORDER BY latest_sent_date DESC 
+                    LIMIT 30";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':team_id', $team_id);
         $stmt->bindParam(':folder', $folder);
         $stmt->execute();
         $emails = $stmt->fetchAll(PDO::FETCH_ASSOC);
         return $emails;
+    }
+    
+    // getMembers
+    public function getThreadMembersBySubject($team_id, $subject, $reply_to)
+    {
+        $query = "SELECT * FROM mails WHERE team_id = :team_id AND subject LIKE :subject AND reply_to = :reply_to";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':team_id', $team_id);
+        $stmt->bindParam(':subject', $subject);
+        $stmt->bindParam(':reply_to', $reply_to);
+        $stmt->execute();
+        $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $members;
     }
     public function insert($email)
     {
@@ -64,5 +79,15 @@ class Mail
         $stmt->execute();
         $imapNumbers = $stmt->fetchAll(PDO::FETCH_COLUMN);
         return $imapNumbers;
+    }
+    // get
+    public function get($team_id, $id){
+        $query = 'SELECT * FROM mails WHERE team_id = :team_id AND id = :id';
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam('team_id', $team_id);
+        $stmt->bindParam('id', $id);
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row;
     }
 }
