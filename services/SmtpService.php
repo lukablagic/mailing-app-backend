@@ -2,19 +2,29 @@
 
 namespace Service;
 
+use Model\TeamsCredentials;
 use PHPMailer\PHPMailer\PHPMailer;
 use Exception;
+use Utility\RequestHandler;
 
 class SmtpService
 {
-    public function __construct()
+
+    private $teamCredentials;
+
+    public function __construct($conn)
     {
-
-
+        $this->teamCredentials = new TeamsCredentials($conn);
     }
 
-    public function sendEmail($email, $password, $data, $attachments)
+    public function sendEmail($team_id)
     {
+        $data = RequestHandler::getPayload();
+        $attachments = RequestHandler::getFiles();
+        $credentials = $this->teamCredentials->getByTeamId($team_id);
+        $email = $credentials['email'];
+        $password = $credentials['password'];
+
         // Instantiate a new PHPMailer object
         $mail = new PHPMailer(true);
 

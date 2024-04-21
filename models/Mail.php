@@ -14,6 +14,7 @@ class Mail
     {
         $this->conn = $conn;
     }
+
     public function getAllThreads($team_id, $folder = 'INBOX')
     {
         $query = "SELECT subject,
@@ -23,7 +24,7 @@ class Mail
                         MAX(from_name) as from_name, 
                         folder,
                         MAX(`from`) as sender, 
-                        MAX(sent_date) as sent_date 
+                        MAX(sent_date) as sent_date
                     FROM mails
                     WHERE team_id = :team_id AND folder = :folder
                     GROUP BY subject, folder  
@@ -34,19 +35,50 @@ class Mail
         $stmt->bindParam(':folder', $folder);
         $stmt->execute();
         $emails = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
         return $emails;
     }
-    
-    // getMembers
+
     public function getThreadMembersBySubject($team_id, $subject, $reply_to)
     {
-        $query = "SELECT * FROM mails WHERE team_id = :team_id AND subject LIKE :subject AND reply_to = :reply_to";
+        $query = "SELECT mails.*,
+                        GROUP_CONCAT(DISTINCT ecc.address SEPARATOR '#') as cc,
+                        GROUP_CONCAT(DISTINCT eto.address SEPARATOR '#') as `to`,
+                        GROUP_CONCAT(DISTINCT ebcc.address SEPARATOR '#') as bcc
+                    FROM mails
+                    LEFT JOIN mails_to eto ON mails.id = eto.mail_id
+                    LEFT JOIN mails_cc ecc ON mails.id = ecc.mail_id
+                    LEFT JOIN mails_bcc ebcc ON mails.id = ebcc.mail_id
+                    WHERE 
+                    team_id = :team_id AND
+                    subject LIKE :subject AND
+                    reply_to = :reply_to
+                    GROUP BY mails.id
+                    ";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':team_id', $team_id);
         $stmt->bindParam(':subject', $subject);
         $stmt->bindParam(':reply_to', $reply_to);
         $stmt->execute();
         $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($members as &$email) {
+            if ($email['to'] != null && $email['to'] != '') {
+                $email['to'] = explode('#', $email['to']);
+            } else  {
+                $email['to'] = [];
+            }
+            if ($email['cc'] != null && $email['cc'] != '') {
+                $email['cc'] = explode('#', $email['cc']);
+            } else {
+                $email['cc'] = [];
+            }
+            if ($email['bcc'] != null && $email['bcc'] != '') {
+                $email['bcc'] = explode('#', $email['bcc']);
+            } else { 
+                $email['bcc'] = [];
+            }
+        }
+
         return $members;
     }
     public function insert($email)
@@ -81,7 +113,8 @@ class Mail
         return $imapNumbers;
     }
     // get
-    public function get($team_id, $id){
+    public function get($team_id, $id)
+    {
         $query = 'SELECT * FROM mails WHERE team_id = :team_id AND id = :id';
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam('team_id', $team_id);
@@ -89,5 +122,17 @@ class Mail
         $stmt->execute();
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         return $row;
+    }
+    // exists 
+    public function exists($imap_number, $folder, $team_id)
+    {
+        $query = "SELECT COUNT(*) as `counter` FROM mails WHERE imap_number = :imap_number AND folder = :folder AND team_id = :team_id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':imap_number', $imap_number);
+        $stmt->bindParam(':folder', $folder);
+        $stmt->bindParam(':team_id', $team_id);
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row['counter'] > 0;
     }
 }

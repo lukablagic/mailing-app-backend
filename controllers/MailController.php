@@ -4,17 +4,18 @@ namespace Controller;
 
 use Model\Mail;
 use Service\MailService;
+use Service\SmtpService;
 use Utility\RequestHandler;
 
 class MailController
 {
-    private $mail;
     private $mailService;
+    private $smtpService;
 
     public function __construct($con)
     {
-        $this->mail = new Mail($con);
         $this->mailService = new MailService($con);
+        $this->smtpService = new SmtpService($con);
     }
 
     public function getCollection($id, $action, $queryParams, $userData)
@@ -30,13 +31,24 @@ class MailController
             RequestHandler::sendResponseArray(200, ['emails' => $mails, 'message' => 'Emails retrieved successfully']);
         }
         if ($id === 'members') {
-            
+
             if (isset($queryParams['id'])) {
                 $id = $queryParams['id'];
             }
 
             $members = $this->mailService->getMembers($userData['team_id'], $queryParams['id']);
-            RequestHandler::sendResponseArray(200, ['members' => $members, 'message' => 'Members retrieved successfully']);
+            RequestHandler::sendResponseArray(200, ['emails' => $members, 'message' => 'Members retrieved successfully']);
+        }
+    }
+    public function postResource($id, $action, $queryParams, $userData)
+    {
+        if ($id === 'send-mail') {
+            $response = $this->smtpService->sendEmail($userData['team_id']);
+
+            if ($response === false) {
+                RequestHandler::sendResponseArray(400, ['message' => 'Email not sent!']);
+            }
+            RequestHandler::sendResponseArray(200, ['message' => 'Email sent successfully!']);
         }
     }
     public function getResource($id, $action, $queryParams, $userData)

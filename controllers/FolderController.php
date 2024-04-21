@@ -27,6 +27,9 @@ class FolderController
     public function postCollection($id, $action, $queryParams, $userData)
     {
     }
+    public function postResource($id, $action, $queryParams, $userData)
+    {
+    }
     public function putResource($id, $action, $queryParams, $userData)
     {
     }

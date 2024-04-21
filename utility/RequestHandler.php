@@ -86,4 +86,9 @@ class RequestHandler
         }
         return null;
     }
+    // getFiles
+    public static function getFiles()
+    {
+        return $_FILES;
+    }
 }

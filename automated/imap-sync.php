@@ -48,7 +48,11 @@ foreach ($allTeams as $team) {
             foreach ($parsedEmails as $parsedEmail) {
                 $parsedEmail->team_id = $team['id'];
                 $parsedEmail->folder = $folder;
-
+                // chcek if mail exits 
+                $mailExists = $mail->exists($parsedEmail->imap_number,$folder,$parsedEmail->team_id);
+                if($mailExists){
+                    continue;
+                }
                 $mail_id = $mail->insert($parsedEmail);
 
                 if (!empty($parsedEmail->to)) {
