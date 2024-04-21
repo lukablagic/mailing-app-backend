@@ -6,6 +6,7 @@ use Model\Mail;
 use Service\MailService;
 use Service\SmtpService;
 use Utility\RequestHandler;
+use Validator\MailValidator;
 
 class MailController
 {
@@ -43,7 +44,10 @@ class MailController
     public function postResource($id, $action, $queryParams, $userData)
     {
         if ($id === 'send-mail') {
-            $response = $this->smtpService->sendEmail($userData['team_id']);
+            $attachments = RequestHandler::getFiles();
+            $payload = RequestHandler::getPayload();
+            $data =  MailValidator::validateSendingDraft($payload);
+            $response = $this->smtpService->sendEmail($userData['team_id'], $data, $attachments);
 
             if ($response === false) {
                 RequestHandler::sendResponseArray(400, ['message' => 'Email not sent!']);

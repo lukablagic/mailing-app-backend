@@ -17,20 +17,16 @@ class SmtpService
         $this->teamCredentials = new TeamsCredentials($conn);
     }
 
-    public function sendEmail($team_id)
+    public function sendEmail($team_id, $data, $attachments = null)
     {
-        $data = RequestHandler::getPayload();
-        $attachments = RequestHandler::getFiles();
         $credentials = $this->teamCredentials->getByTeamId($team_id);
         $email = $credentials['email'];
         $password = $credentials['password'];
-
-        // Instantiate a new PHPMailer object
         $mail = new PHPMailer(true);
 
         // Server settings
         $mail->isSMTP();
-        $mail->Host = 'smtp.gmail.com';
+        $mail->Host = $credentials['smtp_server'];
         $mail->SMTPAuth = true;
         $mail->Username = $email;
         $mail->Password = $password;
@@ -40,12 +36,14 @@ class SmtpService
         //Recipients
         try {
             $mail->setFrom($email);
-            if ($data['to'] != null && is_array($data['to'])) {
+            if (empty($data['to']) === false && is_array($data['to'])) {
                 foreach ($data['to'] as $to) {
                     if ($to != null) {
                         $mail->addAddress($to);
                     }
                 }
+            } else {
+                return false;
             }
             if (isset($data['in_reply_to']) && is_array($data['in_reply_to'])) {
                 $mail->addCustomHeader("In-Reply-To", $data['in_reply_to']);
@@ -84,21 +82,14 @@ class SmtpService
                 http_response_code(400);
                 json_encode("Invalid attachment parameters!");
             }
-
         }
-        // Send the email
         try {
             if (!$mail->send()) {
                 echo 'Message has been sent';
             }
-
         } catch (Exception $e) {
-            echo json_encode('Message could not be sent.');
-            echo json_encode('Mailer Error: ' . $mail->ErrorInfo);
+            var_dump(json_encode('Mailer Error: ' . $mail->ErrorInfo));
+            return false;
         }
     }
-
 }
-
-
-?>

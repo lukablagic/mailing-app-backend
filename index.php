@@ -12,7 +12,7 @@ use Router\Router;
 RequestHandler::enableCORS();
 
 Router::postResource('auth/login', "Controller\AuthController", false);
-Router::postResource('mail/send', "Controller\MailController", false);
+Router::postResource('mail/send', "Controller\MailController", true);
 Router::getCollection('threads', "Controller\MailController", true);
 Router::getCollection('threads/members', "Controller\MailController", true);
 Router::getCollection('folders/all', "Controller\FolderController", true);

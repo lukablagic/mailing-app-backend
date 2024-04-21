@@ -42,7 +42,7 @@ foreach ($allTeams as $team) {
 
 
     foreach ($userFolders as $folder) {
-        $parsedEmails = $imapService->getParsedEmails($credentials['email'], $credentials['imap_password'], $folder);
+        $parsedEmails = $imapService->getParsedEmails($credentials['email'], $credentials['password'], $folder);
         $conn->beginTransaction();
         try {
             foreach ($parsedEmails as $parsedEmail) {

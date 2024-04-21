@@ -92,7 +92,7 @@ class Router
         $queryParams = RequestHandler::parseQueryParams();
         $conn = self::createConnection();
         $userData = null;
-        if ($endpoints[2] === 'auth' && !in_array($endpoints[3], ['login', 'register'])) {
+        if ($endpoints[2] !== 'auth' && in_array($endpoints[3], ['login', 'register']) === false && $isProtected === true) {
             $userData = self::authorize($conn);
         }
         $controller = new $controllerName($conn);

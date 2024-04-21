@@ -28,7 +28,7 @@ foreach ($allTeams as $team) {
     $credentials = $teamsCredentials->getByTeamId($team['id']);
     $imapService = new ImapService($credentials['imap_server'], $credentials['imap_port'],  $credentials['protocol'], $credentials['use_ssl'] === 1);
 
-    $imapFolders = $imapService->getFolders($credentials['email'], $credentials['imap_password']);
+    $imapFolders = $imapService->getFolders($credentials['email'], $credentials['password']);
 
     foreach ($imapFolders as $folder) {
         if ($folders->exists($team['id'], $folder) === false) {
