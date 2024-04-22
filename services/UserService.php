@@ -30,7 +30,7 @@ class UserService
     public function getUserLoginData($token)
     {
         $userData = $this->user->getUserLoginData($token);
-        $teamData = $this->teams->getAll($userData['team_id']);
+        $teamData = $this->teams->get($userData['team_id']);
         $auth['team']   = $teamData;
         $auth['user']   = $userData;
         $auth['token']  = $token;

@@ -2,143 +2,118 @@
 
 namespace Service;
 
-use Ddeboer\Imap\Connection;
-use Ddeboer\Imap\Search\Date\Since;
-use Ddeboer\Imap\Message;
-use Ddeboer\Imap\Server;
-use DateTime;
+use Model\Teams;
+use Model\TeamsCredentials;
+use Model\Mail;
+use Model\MailTo;
+use Model\MailCc;
+use Model\MailReference;
+use Model\Folders;
+use Model\MailBcc;
+use Exception;
+use Utility\ImapUtility;
 
 class ImapService
 {
-    private $server = 'imap.gmail.com';
-    private $port = 993;
-    private $protocol = 'imap';
-    private $ssl = 'ssl';
+    private $conn;
+    private $teams;
+    private $mail;
+    private $mailTo;
+    private $mailCc;
+    private $mailBcc;
+    private $mailReference;
+    private $teamsCredentials;
+    private $folders;
 
-    public function __construct($server, $port = 993, $protocol = 'imap', $useSSL = true)
+
+    public function __construct($conn)
     {
-        $this->server = $server;
-        $this->port = $port;
-        $this->protocol = $protocol;
-        $this->ssl = $useSSL ? 'ssl' : 'novalidate-cert';
+        $this->conn             = $conn;
+        $this->teams            = new Teams($this->conn);
+        $this->mail             = new Mail($this->conn);
+        $this->mailTo           = new MailTo($this->conn);
+        $this->mailCc           = new MailCc($this->conn);
+        $this->mailBcc          = new MailBcc($this->conn);
+        $this->teamsCredentials = new TeamsCredentials($this->conn);
+        $this->folders          = new Folders($this->conn);
+        $this->mailReference    = new MailReference($this->conn);
     }
 
-    public function connect($email, $password, $folder): Connection|false
+    public function syncMailsToday()
     {
-        $mailbox = "{" . $this->server . ":" . $this->port . "/" . $this->protocol . "/" . $this->ssl . "}" . $folder;
-        $imap = imap_open($mailbox, $email, $password);
 
-        if ($imap === false) {
-            return false;
-        }
+        $allTeams = $this->teams->getAll();
+        var_dump($allTeams);
+        foreach ($allTeams as $team) {
+            var_dump($team['id']);
+            $credentials = $this->teamsCredentials->getByTeamId($team['id']);
+            var_dump($credentials);
+            $imapUtlity = new ImapUtility($credentials['imap_server'], $credentials['imap_port'], $credentials['protocol'], $credentials['use_ssl'] === 1);
 
-        return $imap;
-    }
-    public function getParsedEmails($email, $password, $folder)
-    {
-        $server = new Server($this->server);
+            $userFolders = $this->folders->getAll($team['id']);
 
-        $connection = $server->authenticate($email, $password);
+            foreach ($userFolders as $folder) {
+                $parsedEmails = $imapUtlity->getParsedEmails($credentials['email'], $credentials['password'], $folder);
+                $this->conn->beginTransaction();
+                try {
+                    foreach ($parsedEmails as $parsedEmail) {
+                        $parsedEmail->team_id = $team['id'];
+                        $parsedEmail->folder  = $folder;
+                        // chcek if mail exits 
+                        $mailExists = $this->mail->exists($parsedEmail->imap_number, $folder, $parsedEmail->team_id);
+                        if ($mailExists) {
+                            continue;
+                        }
+                        $mail_id = $this->mail->insert($parsedEmail);
 
-        $mbox = $connection->getMailbox($folder);
+                        if (!empty($parsedEmail->to)) {
+                            foreach ($parsedEmail->to as $to) {
+                                $this->mailTo->insert($mail_id, $to);
+                            }
+                        }
+                        if (!empty($parsedEmail->cc)) {
+                            foreach ($parsedEmail->cc as $cc) {
+                                $this->mailCc->insert($mail_id, $cc);
+                            }
+                        }
+                        if (!empty($parsedEmail->bcc)) {
+                            foreach ($parsedEmail->bcc as $bcc) {
+                                $this->mailBcc->insert($mail_id, $bcc);
+                            }
+                        }
+                        if (!empty($parsedEmail->references)) {
+                            foreach ($parsedEmail->references as $reference) {
+                                $this->mailReference->insert($mail_id, $reference);
+                            }
+                        }
+                    }
 
-        // get all emails from 2 days ago 
-        $twoDaysAgo = new DateTime('20 days ago');
-        $criteria = new Since($twoDaysAgo);
-        $emails = $mbox->getMessages($criteria);
 
-        $response = [];
+                    $this->conn->commit();
+                } catch (Exception $e) {
+                    $this->conn->rollback();
 
-        $counter = 0;
-
-        foreach ($emails as $email) {
-            $counter += 1;
-
-            $response[] =  $this->parseEmails($email);
-            if ($counter > 50) {
-                break;
+                    var_dump('Error inserting email', $e->getMessage(), $e->getTraceAsString());
+                    continue;
+                }
             }
         }
-
-        return $response;
     }
-    public function openFolder($imap, $folder): bool
+    public function syncAllFolders()
     {
-        $result = imap_reopen($imap, $folder);
-        if ($result === false) {
-            return false;
-        }
-        return $result;
-    }
-    public function fetchEmails($imap, $criteria): array|null
-    {
-        $emails = imap_search($imap, $criteria, SE_UID);
-        if ($emails === false) {
-            return null;
-        }
-        return $emails;
-    }
-    public function parseEmails(Message $message)
-    {
-        $emailObject = new \stdClass();
-        $emailObject->subject = $message->getSubject();
-        $emailObject->uid = $message->getId();
-        $emailObject->imap_number = (int) $message->getNumber();
-        $emailObject->charset = $message->getCharset();
-        $emailObject->attachments = $message->getAttachments();
-        $emailObject->body = $this->parseBody($message);
-        $emailObject->sent_date = DateTime::createFromFormat('U', $message->getDate()->getTimestamp())->format('Y-m-d H:i:s+00:00');
-        $emailObject->is_read = $message->isSeen() ? 1 : 0;
-        $emailObject->size = $message->getSize();
-        $emailObject->from = $message->getFrom()->getAddress();
-        $emailObject->from_name = $message->getFrom()->getName();
-        $allTo = $message->getTo();
-        foreach ($allTo as $to) {
-            $emailObject->to[] = $to->getAddress();
-        }
-        $allCc = $message->getCc();
-        foreach ($allCc as $cc) {
-            $emailObject->cc[] = $cc->getAddress();
-        }
-        $allBcc = $message->getBcc();
-        foreach ($allBcc as $bcc) {
-            $emailObject->bcc[] = $bcc->getAddress();
-        }
-        $replyTo = $message->getReplyTo();
-        $emailObject->reply_to = $replyTo[0]->getAddress();
 
-        $in_reply_to = $message->getInReplyTo();
-        if (!empty($in_reply_to)) {
-            $emailObject->in_reply_to = $in_reply_to[0];
+        $allTeams = $this->teams->getAll();
+        foreach ($allTeams as $team) {
+            $credentials = $this->teamsCredentials->getByTeamId($team['id']);
+            $imapUtility = new ImapUtility($credentials['imap_server'], $credentials['imap_port'],  $credentials['protocol'], $credentials['use_ssl'] === 1);
+
+            $imapFolders = $imapUtility->getFolders($credentials['email'], $credentials['password']);
+
+            foreach ($imapFolders as $folder) {
+                if ($this->folders->exists($team['id'], $folder) === false) {
+                    $this->folders->insert($team['id'], $folder);
+                }
+            }
         }
-        $emailObject->references = $message->getReferences();
-
-        return $emailObject;
-    }
-    public function parseBody($message)
-    {
-        $body = $message->getBodyHtml();
-        if ($body === null) {
-            $body = $message->getBodyText();
-        }
-        return $body;
-    }
-    public function getFolders($email, $password): array
-    {
-        $server = new Server($this->server);
-
-        $connection = $server->authenticate($email, $password);
-
-        $mailboxes = $connection->getMailboxes();
-
-        $folders = [];
-
-        foreach ($mailboxes as $mailbox) {
-            $folders[] = $mailbox->getName();
-        }
-
-        $connection->close();
-
-        return $folders;
     }
 }
