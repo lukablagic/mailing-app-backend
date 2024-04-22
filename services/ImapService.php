@@ -116,4 +116,60 @@ class ImapService
             }
         }
     }
+    // Sync all emails from all folders
+    public function syncAllEmails()
+    {
+        $allTeams = $this->teams->getAll();
+        foreach ($allTeams as $team) {
+            $credentials = $this->teamsCredentials->getByTeamId($team['id']);
+            $imapUtility = new ImapUtility($credentials['imap_server'], $credentials['imap_port'],  $credentials['protocol'], $credentials['use_ssl'] === 1);
+
+            $userFolders = $this->folders->getAll($team['id']);
+
+            foreach ($userFolders as $folder) {
+                $parsedEmails = $imapUtility->getAll($credentials['email'], $credentials['password'], $folder);
+                $this->conn->beginTransaction();
+                try {
+                    foreach ($parsedEmails as $parsedEmail) {
+                        $parsedEmail->team_id = $team['id'];
+                        $parsedEmail->folder  = $folder;
+                        // chcek if mail exits 
+                        $mailExists = $this->mail->exists($parsedEmail->imap_number, $folder, $parsedEmail->team_id);
+                        if ($mailExists) {
+                            continue;
+                        }
+                        $mail_id = $this->mail->insert($parsedEmail);
+
+                        if (!empty($parsedEmail->to)) {
+                            foreach ($parsedEmail->to as $to) {
+                                $this->mailTo->insert($mail_id, $to);
+                            }
+                        }
+                        if (!empty($parsedEmail->cc)) {
+                            foreach ($parsedEmail->cc as $cc) {
+                                $this->mailCc->insert($mail_id, $cc);
+                            }
+                        }
+                        if (!empty($parsedEmail->bcc)) {
+                            foreach ($parsedEmail->bcc as $bcc) {
+                                $this->mailBcc->insert($mail_id, $bcc);
+                            }
+                        }
+                        if (!empty($parsedEmail->references)) {
+                            foreach ($parsedEmail->references as $reference) {
+                                $this->mailReference->insert($mail_id, $reference);
+                            }
+                        }
+                    }
+
+                    $this->conn->commit();
+                } catch (Exception $e) {
+                    $this->conn->rollback();
+
+                    var_dump('Error inserting email', $e->getMessage(), $e->getTraceAsString());
+                    continue;
+                }
+            }
+        }
+    }
 }
