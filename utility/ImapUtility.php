@@ -25,7 +25,7 @@ class ImapUtility
         $this->ssl      = $useSSL ? 'ssl' : 'novalidate-cert';
     }
 
-    public function connect($email, $password, $folder): Connection|false
+    public function connect($email, $password, $folder): \IMAP\Connection|false
     {
         $mailbox = "{" . $this->server . ":" . $this->port . "/" . $this->protocol . "/" . $this->ssl . "}" . $folder;
         $imap    = imap_open($mailbox, $email, $password);
@@ -44,7 +44,7 @@ class ImapUtility
 
         $mbox = $connection->getMailbox($folder);
 
-            // get all emails from 2 days ago 
+        // get all emails from 2 days ago 
         $twoDaysAgo = new DateTime('20 days ago');
         $criteria   = new Since($twoDaysAgo);
         $emails     = $mbox->getMessages($criteria);
@@ -72,7 +72,7 @@ class ImapUtility
 
         $mbox = $connection->getMailbox($folder);
 
-            // get all emails from 2 days ago 
+        // get all emails from 2 days ago 
         $emails = $mbox->getMessages();
 
         $response = [];
@@ -161,7 +161,7 @@ class ImapUtility
                 continue;
             }
 
-                // test if rerence has , 
+            // test if rerence has , 
             if (strpos($reference, ',') !== false) {
                 $reference = explode(',', $reference);
                 foreach ($reference as $ref) {
@@ -196,5 +196,13 @@ class ImapUtility
         $connection->close();
 
         return $folders;
+    }
+    public function getUnreadMails($email, $password, $folder)
+    {
+      $con = $this->connect($email, $password, $folder);
+        if ($con === false) {
+            return false;
+        }
+      return imap_search($con, 'UNSEEN');
     }
 }

@@ -172,4 +172,24 @@ class ImapService
             }
         }
     }
+    public function syncIsRead()
+    {
+        $allTeams = $this->teams->getAll();
+        foreach ($allTeams as $team) {
+            $credentials = $this->teamsCredentials->getByTeamId($team['id']);
+            $imapUtility = new ImapUtility($credentials['imap_server'], $credentials['imap_port'],  $credentials['protocol'], $credentials['use_ssl'] === 1);
+
+            $userFolders = $this->folders->getAll($team['id']);
+
+            foreach ($userFolders as $folder) {
+                $unreadEmails = $imapUtility->getUnreadMails($credentials['email'], $credentials['password'], $folder);
+
+                if (empty($unreadEmails) === false) {
+                    $this->mail->updateUnread($unreadEmails, $folder, $team['id']);
+                    $this->mail->updateRead($unreadEmails, $folder, $team['id']);
+                }
+
+            }
+        }
+    }
 }

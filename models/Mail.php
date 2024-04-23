@@ -64,7 +64,7 @@ class Mail
         foreach ($members as &$email) {
             if ($email['to'] != null && $email['to'] != '') {
                 $email['to'] = explode('#', $email['to']);
-            } else  {
+            } else {
                 $email['to'] = [];
             }
             if ($email['cc'] != null && $email['cc'] != '') {
@@ -74,7 +74,7 @@ class Mail
             }
             if ($email['bcc'] != null && $email['bcc'] != '') {
                 $email['bcc'] = explode('#', $email['bcc']);
-            } else { 
+            } else {
                 $email['bcc'] = [];
             }
         }
@@ -101,7 +101,6 @@ class Mail
         $stmt->execute();
         return $this->conn->lastInsertId();
     }
-    // getImapNumbers
     public function getImapNumbers($team_id, $folder)
     {
         $query = "SELECT imap_number FROM mails WHERE team_id = :team_id AND folder = :folder";
@@ -112,7 +111,6 @@ class Mail
         $imapNumbers = $stmt->fetchAll(PDO::FETCH_COLUMN);
         return $imapNumbers;
     }
-    // get
     public function get($team_id, $id)
     {
         $query = 'SELECT * FROM mails WHERE team_id = :team_id AND id = :id';
@@ -123,7 +121,6 @@ class Mail
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         return $row;
     }
-    // exists 
     public function exists($imap_number, $folder, $team_id)
     {
         $query = "SELECT COUNT(*) as `counter` FROM mails WHERE imap_number = :imap_number AND folder = :folder AND team_id = :team_id";
@@ -134,5 +131,21 @@ class Mail
         $stmt->execute();
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         return $row['counter'] > 0;
+    }
+    public function updateUnread($unreadEmails, $folder,$team_id)
+    {
+        $query = "UPDATE mails SET is_read = 0 WHERE imap_number IN (" . implode(',', $unreadEmails) . ") AND folder = :folder AND team_id = :team_id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':folder', $folder);
+        $stmt->bindParam(':team_id', $team_id);
+        $stmt->execute();
+    }
+    public function updateRead($unreadEmails, $folder,$team_id)
+    {
+        $query = "UPDATE mails SET is_read = 1 WHERE imap_number NOT IN (" . implode(',', $unreadEmails) . ") AND folder = :folder AND team_id = :team_id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':folder', $folder);
+        $stmt->bindParam(':team_id', $team_id);
+        $stmt->execute();
     }
 }
