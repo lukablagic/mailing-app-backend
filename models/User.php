@@ -96,4 +96,22 @@ class User
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
+    // get user by id 
+    public function getTeamMembers($token)
+    {
+        $stmt = $this->conn->prepare("SELECT 
+        u.id,
+        u.name,
+        u.surname, 
+        u.email,
+        tm.team_id as team_id
+      FROM users u
+      JOIN team_members tm ON u.id = tm.user_id
+      WHERE 
+        u.token != :token
+    ");
+        $stmt->bindParam(':token', $token);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
