@@ -24,10 +24,7 @@ class User
         $stmt->bindParam(':password', $password);
         $stmt->bindParam(':token', $token);
         $stmt->execute();
-        if ($stmt->rowCount() > 0) {
-            return true;
-        }
-        return false;
+        return $this->conn->lastInsertId();
     }
     public function exists($email)
     {
