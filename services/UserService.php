@@ -36,7 +36,7 @@ class UserService
         $auth['token'] = $token;
 
         $auth['team']['members'] = [];
-        $auth['team']['members'] = $this->user->getTeamMembers($token);
+        $auth['team']['members'] = $this->user->getTeamMembers($token, $userData['team_id']);
         $auth['team']['addresses'] = [];
         $auth['team']['addresses'] = $this->teamAddresses->getAllAddresses($userData['team_id']);
 

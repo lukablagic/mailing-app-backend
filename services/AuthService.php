@@ -44,7 +44,7 @@ class AuthService
             return false;
         }
 
-        $token = bin2hex(random_bytes(16));
+        $token = bin2hex(random_bytes(32));
 
         $response = $this->user->updateToken($data['email'], $token);
 
@@ -63,7 +63,7 @@ class AuthService
             return false;
         }
         $password     = password_hash($data['password'], PASSWORD_DEFAULT);
-        $token        = bin2hex(random_bytes(16));
+        $token        = bin2hex(random_bytes(32));
         $userResponse = $this->user->insert($data['name'], $data['surname'], $data['email'], $password, $token);
 
         if ($userResponse === false) {
