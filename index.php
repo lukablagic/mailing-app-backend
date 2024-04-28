@@ -15,7 +15,7 @@ Router::postResource('mail/send', "Controller\MailController", true);
 Router::getCollection('threads', "Controller\MailController", true);
 Router::getCollection('threads/members', "Controller\MailController", true);
 Router::getCollection('folders/all', "Controller\FolderController", true);
-
+Router::postResource('invitations/create-link', "Controller\InviteController", true);
 
 RequestHandler::invalidEndpoint();
 
