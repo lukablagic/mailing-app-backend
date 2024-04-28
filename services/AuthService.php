@@ -2,13 +2,12 @@
 
 namespace Service;
 
-use PHPMailer\PHPMailer\PHPMailer;
-use Exception;
 use Model\User;
 use Model\Teams;
 use Model\TeamMembers;
 use Utility\RequestHandler;
 use Validator\AuthValidator;
+use Model\Invitations;
 
 class AuthService
 {
@@ -16,6 +15,7 @@ class AuthService
     private $user;
     private $teams;
     private $teamMembers;
+    private $invitation;
 
 
     public function __construct($conn)
@@ -23,6 +23,7 @@ class AuthService
         $this->user        = new User($conn);
         $this->teams       = new Teams($conn);
         $this->teamMembers = new TeamMembers($conn);
+        $this->invitation  = new Invitations($conn);
     }
     /**
      * Returns a token if the user exists and the password is correct 
@@ -85,6 +86,31 @@ class AuthService
         }
 
         return true;
+    }
+    public function addMember()
+    {
+        $data           = RequestHandler::getPayload();
+        $code           = $data['code'];
+        $invitation_uid = $data['uid'];
+var_dump($data);
+        AuthValidator::validateLogin($data);
+
+        $user = $this->user->exists($data['email']);
+        if ($user === true) {
+            return false;
+        }
+        $password = password_hash($data['password'], PASSWORD_DEFAULT);
+        $token    = bin2hex(random_bytes(32));
+        $user_id  = $this->user->insert($data['name'], $data['surname'], $data['email'], $password, $token);
+
+        if ($user_id === false) {
+            return false;
+        }
+
+        $teamId       = $this->invitation->getTeamId($code, $invitation_uid);
+        $color        = '#' . dechex(rand(0x000000, 0xFFFFFF));
+
+        return $this->teamMembers->insert($user_id, $teamId, $color);
     }
     public function authorize()
     {

@@ -25,4 +25,12 @@ class Invitations
         $stmt->bindParam(':valid_to', $valid_to);
         return   $stmt->execute();
     }
+    public function getTeamId($code,$invitation_uid){
+        $query = "SELECT team_id FROM invitations WHERE code = :code AND invitation_uid = :invitation_uid";
+        $stmt  = $this->conn->prepare($query);
+        $stmt->bindParam(':code', $code);
+        $stmt->bindParam(':invitation_uid', $invitation_uid);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_COLUMN);
+    }
 }

@@ -28,7 +28,7 @@ class InvitationsService
         if ($response === false) {
             return false;
         }
-        $url = $_SERVER['HTTP_HOST'] . '/register?uid=' . $invitation_uid . '&code=' . $code;
+        $url = $_SERVER['HTTP_HOST'] . '/app/register?uid=' . $invitation_uid . '&code=' . $code;
         return $url;
     }
 }

@@ -38,13 +38,21 @@ class AuthController
                 RequestHandler::sendResponseArray(400, ['message' => 'Wrong email or password!']);
             }
             $auth = $this->userService->getUserLoginData($token);
-         
+
             RequestHandler::sendResponseArray(200, ['auth' => $auth]);
         }
 
         if ($id === 'register') {
-            $response = $this->authService->register();
-            if ($response === false) {
+            $payload = RequestHandler::getPayload();
+            $success = false;
+            
+            if (isset($payload['code']) && $payload['code'] !== '' && isset($payload['uid']) && $payload['uid'] !== '') {
+                $success =   $this->authService->addMember();
+            } else {
+                $success = $this->authService->register();
+            }
+
+            if ($success === false) {
                 RequestHandler::sendResponseArray(400, ['message' => 'User with this email already exists!']);
             }
             RequestHandler::sendResponseArray(200, ['message' => 'User registered successfully!']);
