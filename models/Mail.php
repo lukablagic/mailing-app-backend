@@ -15,7 +15,7 @@ class Mail
         $this->conn = $conn;
     }
 
-    public function getAllThreads($team_id, $folder = 'INBOX')
+    public function getAllThreads($team_id, $folder = 'INBOX', $limit = 20)
     {
         $query = "SELECT subject,
                         MAX(is_read) as is_read,
@@ -29,7 +29,7 @@ class Mail
                     WHERE team_id = :team_id AND folder = :folder
                     GROUP BY subject, folder  
                     ORDER BY latest_sent_date DESC 
-                    LIMIT 30";
+                    LIMIT " . $limit;
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':team_id', $team_id);
         $stmt->bindParam(':folder', $folder);

@@ -30,9 +30,10 @@ class MailService
         return false;
     }
     // getAllThreads
-    public function getAllThreads($team_id, $folder)
+    public function getAllThreads($team_id, $folder,$page = 1)
     {
-        $mails = $this->mail->getAllThreads($team_id, $folder);
+        $limit = 20 * $page;
+        $mails = $this->mail->getAllThreads($team_id, $folder,$limit);
 
         if ($mails === false) {
             return false;

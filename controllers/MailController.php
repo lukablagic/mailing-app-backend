@@ -23,7 +23,8 @@ class MailController
     {
         if ($id === 'all') {
             $folder = '';
-
+            $page   = 1;
+            
             if (isset($queryParams['folder'])) {
                 $folder = $queryParams['folder'];
             }
