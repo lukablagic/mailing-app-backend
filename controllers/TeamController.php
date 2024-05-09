@@ -38,6 +38,16 @@ class TeamController
     }
     public function putResource($id, $action, $queryParams, $userData)
     {
+        if($id === 'team-crendentials'){
+            $payload = RequestHandler::getPayload();
+            $response = $this->teamService->updateTeamSettings($userData['team_id'], $payload['credentials']);
+
+            if ($response === false) {
+                RequestHandler::sendResponseArray(400, ['message' => 'Unable to update team credentials!']);
+            }
+
+            RequestHandler::sendResponseArray(200, ['message' => 'Team credentials updated successfully!']);
+        }
     }
     public function deleteResource($id, $action, $queryParams, $userData)
     {

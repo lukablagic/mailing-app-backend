@@ -23,4 +23,9 @@ class TeamService
     {
         return $this->teamsCredentials->getTeamSettings($team_id);
     }
+    public function updateTeamSettings($team_id, $credentials)
+    {
+        return $this->teamsCredentials->updateTeamSettings($team_id, $credentials);
+    }
+    
 }

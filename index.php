@@ -17,6 +17,7 @@ Router::getCollection('threads/members', "Controller\MailController", true);
 Router::getCollection('folders/all', "Controller\FolderController", true);
 Router::postResource('invitations/create-link', "Controller\InviteController", true);
 Router::getCollection('teams/team-credentials', "Controller\TeamController", true);
+Router::putResource('teams/team-credentials', "Controller\TeamController", true);
 
 RequestHandler::invalidEndpoint();
 
