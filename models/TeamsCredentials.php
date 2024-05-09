@@ -23,6 +23,14 @@ class TeamsCredentials
         $team = $stmt->fetch(PDO::FETCH_ASSOC);
         return $team;
     }
-
-
+    // getTeamSettings
+    public function getTeamSettings($team_id)
+    {
+        $query = "SELECT * FROM teams_credentials WHERE team_id = :team_id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':team_id', $team_id);
+        $stmt->execute();
+        $team = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $team;
+    }
 }
