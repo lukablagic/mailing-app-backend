@@ -188,7 +188,6 @@ class ImapService
                     $this->mail->updateUnread($unreadEmails, $folder, $team['id']);
                     $this->mail->updateRead($unreadEmails, $folder, $team['id']);
                 }
-
             }
         }
     }
