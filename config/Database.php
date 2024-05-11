@@ -15,7 +15,7 @@ class Database
 
     public function __construct()
     {
-        $config = require_once './Config.php';
+        $config = require_once '.Config.php';
         $this->host = $config['host'];
         $this->db_name = $config['db_name'];
         $this->username = $config['username'];
