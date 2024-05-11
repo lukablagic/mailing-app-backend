@@ -15,10 +15,10 @@ class Database
 
     public function __construct()
     {
-        $this->host = '127.0.0.1:3306';
-        $this->db_name = 'devmail';
-        $this->password = "AkCdGHWL@Ubh6prb";
-        $this->username = 'mailing_app_normal';
+        $this->host     = 'localhost';
+        $this->db_name  = 'kfjnkrqp_devmail';
+        $this->username = 'kfjnkrqp';
+        $this->password = "5bSapiE572";
     }
 
     public function connect()
@@ -26,12 +26,15 @@ class Database
 
         $this->conn = null;
         try {
-            $this->conn = new PDO("mysql:host=" . $this->host . ";dbname=" . $this->db_name, $this->username, $this->password);
+            $options = array(
+                PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8',
+            );
+            $this->conn = new PDO('mysql:host=' . $this->host . ';port=3306;dbname=' . $this->db_name, $this->username, $this->password, $options);
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         } catch (PDOException $exception) {
+            var_dump($exception->getMessage() , $exception->getTraceAsString() , $exception->getCode());
             echo "Connection error: " . $exception->getMessage();
         }
         return $this->conn;
     }
-
 }
