@@ -15,10 +15,11 @@ class Database
 
     public function __construct()
     {
-        $this->host     = 'localhost';
-        $this->db_name  = 'kfjnkrqp_devmail';
-        $this->username = 'kfjnkrqp';
-        $this->password = "5bSapiE572";
+        $config = require '/path/to/your/config/config.php';
+        $this->host = $config['host'];
+        $this->db_name = $config['db_name'];
+        $this->username = $config['username'];
+        $this->password = $config['password'];
     }
 
     public function connect()
