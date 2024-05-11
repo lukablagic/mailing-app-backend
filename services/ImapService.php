@@ -47,7 +47,6 @@ class ImapService
         foreach ($allTeams as $team) {
             var_dump($team['id']);
             $credentials = $this->teamsCredentials->getByTeamId($team['id']);
-            var_dump($credentials);
             $imapUtlity = new ImapUtility($credentials['imap_server'], $credentials['imap_port'], $credentials['protocol'], $credentials['use_ssl'] === 1);
 
             $userFolders = $this->folders->getAll($team['id']);
