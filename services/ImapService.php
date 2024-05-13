@@ -170,6 +170,7 @@ class ImapService
                 }
             }
         }
+        var_dump('Emails synced successfully :)');
     }
     public function syncIsRead()
     {
