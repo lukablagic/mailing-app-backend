@@ -21,7 +21,7 @@ class SmtpService
     {
         $credentials = $this->teamCredentials->getByTeamId($team_id);
         $email = $credentials['email'];
-        $password = $credentials['password'];
+        $password = $credentials['access_password'];
         $mail = new PHPMailer(true);
 
         // Server settings

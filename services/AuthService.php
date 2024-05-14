@@ -8,6 +8,7 @@ use Model\TeamMembers;
 use Utility\RequestHandler;
 use Validator\AuthValidator;
 use Model\Invitations;
+use Model\TeamsCredentials;
 
 class AuthService
 {
@@ -16,14 +17,16 @@ class AuthService
     private $teams;
     private $teamMembers;
     private $invitation;
+    private $teamsCredentials;
 
 
     public function __construct($conn)
     {
-        $this->user        = new User($conn);
-        $this->teams       = new Teams($conn);
-        $this->teamMembers = new TeamMembers($conn);
-        $this->invitation  = new Invitations($conn);
+        $this->user             = new User($conn);
+        $this->teams            = new Teams($conn);
+        $this->teamMembers      = new TeamMembers($conn);
+        $this->invitation       = new Invitations($conn);
+        $this->teamsCredentials = new TeamsCredentials($conn);
     }
     /**
      * Returns a token if the user exists and the password is correct 
@@ -84,21 +87,20 @@ class AuthService
                 return false;
             }
         }
-
-        return true;
+        return $this->teamsCredentials->insert($teamId, '', 993, 'imap', $data['email'], '',443, '');
     }
     public function addMember()
     {
         $data           = RequestHandler::getPayload();
         $code           = $data['code'];
         $invitation_uid = $data['uid'];
-var_dump($data);
         AuthValidator::validateLogin($data);
 
         $user = $this->user->exists($data['email']);
         if ($user === true) {
             return false;
         }
+
         $password = password_hash($data['password'], PASSWORD_DEFAULT);
         $token    = bin2hex(random_bytes(32));
         $user_id  = $this->user->insert($data['name'], $data['surname'], $data['email'], $password, $token);
@@ -110,7 +112,7 @@ var_dump($data);
         $teamId       = $this->invitation->getTeamId($code, $invitation_uid);
         $color        = '#' . dechex(rand(0x000000, 0xFFFFFF));
 
-        return $this->teamMembers->insert($user_id, $teamId, $color);
+        return  $this->teamMembers->insert($user_id, $teamId, $color);
     }
     public function authorize()
     {
@@ -118,10 +120,12 @@ var_dump($data);
         if ($token === false) {
             RequestHandler::sendResponseArray(401, ['message' => 'Unauthorized!']);
         }
+
         $user = $this->user->getUserByToken($token);
         if ($user === false) {
             return false;
         }
+
         return $user;
     }
 }
