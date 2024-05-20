@@ -121,6 +121,10 @@ class ImapService
         $allTeams = $this->teams->getAll();
         foreach ($allTeams as $team) {
             $credentials = $this->teamsCredentials->getByTeamId($team['id']);
+            $credentialsActive = $this->validateCredentials($credentials);
+            if (!$credentialsActive) {
+                continue;
+            }
             $imapUtility = new ImapUtility($credentials['imap_server'], $credentials['imap_port'],  $credentials['protocol'], $credentials['use_ssl'] === 1);
 
             $userFolders = $this->folders->getAll($team['id']);
@@ -171,6 +175,7 @@ class ImapService
             }
         }
     }
+
     public function syncIsRead()
     {
         $allTeams = $this->teams->getAll();
@@ -188,6 +193,13 @@ class ImapService
                     $this->mail->updateRead($unreadEmails, $folder, $team['id']);
                 }
             }
+        }
+    }
+
+    private function validateCredentials($credentials)
+    {
+        if (empty($credentials['imap_server']) || empty($credentials['imap_port']) || empty($credentials['protocol']) || empty($credentials['use_ssl']) || empty($credentials['email']) || empty($credentials['access_password'])) {
+            return false;
         }
     }
 }
