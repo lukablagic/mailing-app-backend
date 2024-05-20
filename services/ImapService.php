@@ -122,9 +122,11 @@ class ImapService
         foreach ($allTeams as $team) {
             $credentials = $this->teamsCredentials->getByTeamId($team['id']);
             $credentialsActive = $this->validateCredentials($credentials);
+           
             if (!$credentialsActive) {
                 continue;
             }
+           
             $imapUtility = new ImapUtility($credentials['imap_server'], $credentials['imap_port'],  $credentials['protocol'], $credentials['use_ssl'] === 1);
 
             $userFolders = $this->folders->getAll($team['id']);
