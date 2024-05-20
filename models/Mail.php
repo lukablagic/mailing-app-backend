@@ -23,7 +23,7 @@ class Mail
                         MAX(sent_date) as latest_sent_date,
                         MAX(from_name) as from_name, 
                         folder,
-                        MAX(`from`) as sender, 
+                        MAX(`from`) as `from`, 
                         MAX(sent_date) as sent_date
                     FROM mails
                     WHERE team_id = :team_id AND folder = :folder
