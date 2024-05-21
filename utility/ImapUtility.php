@@ -72,7 +72,6 @@ class ImapUtility
 
         $mbox = $connection->getMailbox($folder);
 
-        // get all emails from 2 days ago 
         $emails = $mbox->getMessages();
 
         $response = [];
@@ -204,5 +203,15 @@ class ImapUtility
             return false;
         }
       return imap_search($con, 'UNSEEN');
+    }
+
+    // get sent emails 
+    public function getSentMails($email, $password, $folder)
+    {
+        $con = $this->connect($email, $password, $folder);
+        if ($con === false) {
+            return false;
+        }
+        return imap_search($con, 'SENT');
     }
 }

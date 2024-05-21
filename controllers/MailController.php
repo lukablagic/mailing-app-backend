@@ -2,8 +2,8 @@
 
 namespace Controller;
 
-use Model\Mail;
 use Service\MailService;
+use Service\ImapService;
 use Service\SmtpService;
 use Utility\RequestHandler;
 use Validator\MailValidator;
@@ -12,11 +12,13 @@ class MailController
 {
     private $mailService;
     private $smtpService;
+    private $imapService;
 
     public function __construct($con)
     {
         $this->mailService = new MailService($con);
         $this->smtpService = new SmtpService($con);
+        $this->imapService = new ImapService($con);
     }
 
     public function getCollection($id, $action, $queryParams, $userData)
@@ -53,6 +55,8 @@ class MailController
             if ($response === false) {
                 RequestHandler::sendResponseArray(400, ['message' => 'Email not sent!']);
             }
+            $this->imapService->syncSent($userData['team_id']);
+
             RequestHandler::sendResponseArray(200, ['message' => 'Email sent successfully!']);
         }
     }

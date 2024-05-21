@@ -43,9 +43,7 @@ class ImapService
     {
 
         $allTeams = $this->teams->getAll();
-        var_dump($allTeams);
         foreach ($allTeams as $team) {
-            var_dump($team['id']);
             $credentials = $this->teamsCredentials->getByTeamId($team['id']);
             $imapUtlity = new ImapUtility($credentials['imap_server'], $credentials['imap_port'], $credentials['protocol'], $credentials['use_ssl'] === 1);
 
@@ -87,7 +85,6 @@ class ImapService
                         }
                     }
 
-
                     $this->conn->commit();
                 } catch (Exception $e) {
                     $this->conn->rollback();
@@ -122,11 +119,11 @@ class ImapService
         foreach ($allTeams as $team) {
             $credentials = $this->teamsCredentials->getByTeamId($team['id']);
             $credentialsActive = $this->validateCredentials($credentials);
-           
+
             if (!$credentialsActive) {
                 continue;
             }
-           
+
             $imapUtility = new ImapUtility($credentials['imap_server'], $credentials['imap_port'],  $credentials['protocol'], $credentials['use_ssl'] === 1);
 
             $userFolders = $this->folders->getAll($team['id']);
@@ -202,6 +199,60 @@ class ImapService
     {
         if (empty($credentials['imap_server']) || empty($credentials['imap_port']) || empty($credentials['protocol']) || empty($credentials['use_ssl']) || empty($credentials['email']) || empty($credentials['access_password'])) {
             return false;
+        }
+    }
+
+    public function syncSent($team_id)
+    {
+        $credentials = $this->teamsCredentials->getByTeamId($team_id);
+        $imapUtility = new ImapUtility($credentials['imap_server'], $credentials['imap_port'],  $credentials['protocol'], $credentials['use_ssl'] === 1);
+
+        $folder = 'INBOX.Sent';// TODO " get from db
+
+        $parsedEmails = $imapUtility->getAll($credentials['email'], $credentials['access_password'], $folder);
+
+        $this->conn->beginTransaction();
+        
+        try {
+            foreach ($parsedEmails as $parsedEmail) {
+                $parsedEmail->team_id = $team_id;
+                $parsedEmail->folder  = $folder;
+
+                $mailExists = $this->mail->exists($parsedEmail->imap_number, $folder, $parsedEmail->team_id);
+
+                if ($mailExists) {
+                    continue;
+                }
+
+                $mail_id = $this->mail->insert($parsedEmail);
+
+                if (!empty($parsedEmail->to)) {
+                    foreach ($parsedEmail->to as $to) {
+                        $this->mailTo->insert($mail_id, $to);
+                    }
+                }
+                if (!empty($parsedEmail->cc)) {
+                    foreach ($parsedEmail->cc as $cc) {
+                        $this->mailCc->insert($mail_id, $cc);
+                    }
+                }
+                if (!empty($parsedEmail->bcc)) {
+                    foreach ($parsedEmail->bcc as $bcc) {
+                        $this->mailBcc->insert($mail_id, $bcc);
+                    }
+                }
+                if (!empty($parsedEmail->references)) {
+                    foreach ($parsedEmail->references as $reference) {
+                        $this->mailReference->insert($mail_id, $reference);
+                    }
+                }
+            }
+
+            $this->conn->commit();
+        } catch (Exception $e) {
+            $this->conn->rollback();
+
+            var_dump('Error inserting email', $e->getMessage(), $e->getTraceAsString());
         }
     }
 }
