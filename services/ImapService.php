@@ -117,9 +117,13 @@ class ImapService
     {
         $allTeams = $this->teams->getAll();
         foreach ($allTeams as $team) {
-            $credentials = $this->teamsCredentials->getByTeamId($team['id']);
-            $credentialsActive = $this->validateCredentials($credentials);
+            var_dump($team['name']);
 
+            $credentials       = $this->teamsCredentials->getByTeamId($team['id']);
+            $credentialsActive = $this->validateCredentials($credentials);
+            
+            var_dump('active',$credentialsActive);
+            
             if (!$credentialsActive) {
                 continue;
             }
