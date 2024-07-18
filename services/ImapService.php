@@ -122,7 +122,7 @@ class ImapService
             $credentials       = $this->teamsCredentials->getByTeamId($team['id']);
             $credentialsActive = $this->validateCredentials($credentials);
             
-            var_dump('active',$credentialsActive);
+            var_dump('active', $credentialsActive);
             
             if (!$credentialsActive) {
                 continue;
@@ -204,6 +204,8 @@ class ImapService
         if (empty($credentials['imap_server']) || empty($credentials['imap_port']) || empty($credentials['protocol']) || empty($credentials['use_ssl']) || empty($credentials['email']) || empty($credentials['access_password'])) {
             return false;
         }
+
+        return true;
     }
 
     public function syncSent($team_id)
