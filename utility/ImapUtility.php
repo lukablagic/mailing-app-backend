@@ -44,10 +44,10 @@ class ImapUtility
 
         $mbox = $connection->getMailbox($folder);
 
-        // get all emails from 2 days ago 
-        $twoDaysAgo = new DateTime('20 days ago');
-        $criteria   = new Since($twoDaysAgo);
-        $emails     = $mbox->getMessages($criteria);
+        // // get all emails from 2 days ago 
+        // $twoDaysAgo = new DateTime('20 days ago');
+        // $criteria   = new Since($twoDaysAgo);
+        $emails     = $mbox->getMessages();
 
         $response = [];
 

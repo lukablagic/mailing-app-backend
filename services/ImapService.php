@@ -51,6 +51,7 @@ class ImapService
 
             foreach ($userFolders as $folder) {
                 $parsedEmails = $imapUtlity->getParsedEmails($credentials['email'], $credentials['access_password'], $folder);
+                var_dump($parsedEmails,'folder',$folder);
                 $this->conn->beginTransaction();
                 try {
                     foreach ($parsedEmails as $parsedEmail) {
@@ -117,12 +118,12 @@ class ImapService
     {
         $allTeams = $this->teams->getAll();
         foreach ($allTeams as $team) {
-            var_dump($team['name']);
+            // var_dump($team['name']);
 
             $credentials       = $this->teamsCredentials->getByTeamId($team['id']);
             $credentialsActive = $this->validateCredentials($credentials);
             
-            var_dump('active', $credentialsActive);
+            // var_dump('active', $credentialsActive);
             
             if (!$credentialsActive) {
                 continue;
