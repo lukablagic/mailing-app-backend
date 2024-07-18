@@ -82,9 +82,6 @@ class ImapUtility
             $counter += 1;
 
             $response[] = $this->parseEmails($email);
-            if ($counter > 500) {
-                break;
-            }
         }
 
         return $response;
